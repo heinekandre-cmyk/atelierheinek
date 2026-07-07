@@ -2560,51 +2560,86 @@ const _spinTilt = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0
 const _spinY = new THREE.Vector3(0, 1, 0);
 const _spinQ = new THREE.Quaternion();
 
-// ── Fingeransicht (3D) ─────────────────────────────────────────────────
-// Ein stilisierter Finger als Rotationskörper um Y — er steht wie eine
-// Skulptur auf dem Graphitboden, der Ring sitzt waagrecht aufgeschoben.
-// Bewusst abstrakt in mattem, dunklem Ton (keine Hautimitation): Knöchel-
-// wulst, Fingerbeere und Nagel machen ihn lesbar, ohne kitschig zu werden.
-// Der Radius folgt dem Innen-Ø des Rings — die Proportionen stimmen exakt.
-let fingerMode = false, fingerGroup = null;
-const FINGER_MAT = new THREE.MeshStandardMaterial({
+// ── Fingeransicht: Gliederhand ─────────────────────────────────────────
+// Eine prozedural erzeugte Gliederhand (eigenes Werk, keine Fremdlizenz) —
+// Segmente und Kugelgelenke wie bei der hölzernen Zeichenhand im Atelier.
+// Sie wird erst beim ersten Umschalten nachgeladen (~890 KB roh, nach
+// Kompression ein Bruchteil); die Startlast der Seite bleibt unberührt.
+// Das Modell ist in Millimetern und bereits fertig ausgerichtet gebaut:
+// Ringfinger senkrecht durch den Ursprung, Ringsitz am Fingeransatz.
+// Skalierung: Innen-Ø der gewählten Größe = Finger-Ø am Ringsitz.
+let fingerMode = false, fingerGroup = null, handLoading = false;
+const HAND_URL = '/vendor/models/hand.obj';
+const HAND_Q = new THREE.Quaternion(0, 0, 0, 1);   // Modell ist vor-ausgerichtet
+const HAND_T = new THREE.Vector3(0, 0, 0);
+const HAND_R = 8.2;           // Fingerradius am Ringsitz (Modell-mm)
+const HAND_MIN_Y = -123;      // Unterkante Handgelenk (Modell-mm)
+const HAND_MAT = new THREE.MeshStandardMaterial({
   color: 0x4a4037, roughness: 0.88, metalness: 0.0, envMapIntensity: 0.35
 });
-const NAIL_MAT = new THREE.MeshStandardMaterial({
-  color: 0x6b6154, roughness: 0.5, metalness: 0.0, envMapIntensity: 0.5
-});
+const SHADOW_EXT = 24;        // Standard-Ausdehnung der Schattenkamera
 
-function buildFingerMesh() {
-  if (fingerGroup) {
-    fingerGroup.children.forEach(c => c.geometry && c.geometry.dispose());
-    scene.remove(fingerGroup); fingerGroup = null;
+// Minimaler OBJ-Parser: unser Export enthält nur v- und f-Zeilen (trianguliert),
+// dafür braucht es keinen vollen OBJLoader als Abhängigkeit.
+function parseHandOBJ(text) {
+  const pos = [], idx = [];
+  for (const line of text.split('\n')) {
+    if (line.charCodeAt(0) === 118 && line.charCodeAt(1) === 32) {        // 'v '
+      const a = line.slice(2).trim().split(/\s+/);
+      pos.push(+a[0], +a[1], +a[2]);
+    } else if (line.charCodeAt(0) === 102 && line.charCodeAt(1) === 32) { // 'f '
+      const a = line.slice(2).trim().split(/\s+/);
+      idx.push(a[0] - 1, a[1] - 1, a[2] - 1);
+    }
   }
-  const R = diameterForEU(state.euSize) / 2;
-  // Profil (y, Radiusfaktor): vom Bodenstumpf über Knöchel und Ringzone
-  // (knapp innerhalb der Bohrung) bis zur gerundeten Kuppe.
-  const prof = [
-    [-19.0, 0.001], [-18.6, 0.50], [-17.8, 0.82], [-16.4, 0.97],
-    [-13.5, 1.03], [-10.5, 1.055], [-8.0, 1.02], [-5.5, 0.995],
-    [-3.5, 0.985], [3.5, 0.985],                       // Ringzone
-    [6.0, 0.99], [9.0, 0.965],
-    [10.4, 0.93], [11.6, 0.95],                        // Gelenkfalte
-    [14.5, 0.925], [18.5, 0.875],
-    [21.5, 0.80], [24.0, 0.64], [25.6, 0.42], [26.6, 0.001]
-  ].map(([y, f]) => new THREE.Vector2(Math.max(0.001, f * R), y));
-  const finger = new THREE.Mesh(new THREE.LatheGeometry(prof, 56), FINGER_MAT);
-  finger.castShadow = true; finger.receiveShadow = true;
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setIndex(idx);
+  g.computeVertexNormals(); // weiche Normalen aus dem verschweißten Netz
+  return g;
+}
 
-  // Nagel: flachgedrückte Kugel, halb in die Kuppe versenkt
-  const nail = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 16), NAIL_MAT);
-  nail.scale.set(R * 0.17, R * 0.62, R * 0.42);
-  nail.position.set(R * 0.76, 21.0, 0);
-  nail.rotation.z = -0.14;                             // folgt der Verjüngung
-  nail.castShadow = true;
+async function ensureHand() {
+  if (fingerGroup || handLoading) return;
+  handLoading = true;
+  try {
+    const res = await fetch(HAND_URL);
+    if (!res.ok) throw new Error(res.status);
+    const mesh = new THREE.Mesh(parseHandOBJ(await res.text()), HAND_MAT);
+    mesh.castShadow = true; mesh.receiveShadow = true;
+    const inner = new THREE.Group();                 // feste Ausrichtung
+    inner.quaternion.copy(HAND_Q); inner.position.copy(HAND_T);
+    inner.add(mesh);
+    fingerGroup = new THREE.Group();                 // Skalierung + Drehteller
+    fingerGroup.add(inner);
+    scene.add(fingerGroup);
+    applyFingerScale();
+    fingerGroup.visible = fingerMode;
+  } catch (err) {
+    console.warn('Handmodell nicht ladbar:', err);
+    fingerMode = false;
+    document.getElementById('vcFinger').classList.remove('active');
+  }
+  handLoading = false;
+}
 
-  fingerGroup = new THREE.Group();
-  fingerGroup.add(finger, nail);
-  fingerGroup.visible = fingerMode;
-  scene.add(fingerGroup);
+// Hand, Boden und Schattenkamera an die aktuelle Ringgröße anpassen
+function applyFingerScale() {
+  const s = (diameterForEU(state.euSize) / 2) / HAND_R;
+  if (fingerGroup) fingerGroup.scale.setScalar(s);
+  if (fingerMode) {
+    ground.position.y = HAND_MIN_Y * s - 0.5;
+    const e = SHADOW_EXT * 5;
+    keyLight.shadow.camera.left = -e; keyLight.shadow.camera.right = e;
+    keyLight.shadow.camera.top  =  e; keyLight.shadow.camera.bottom = -e;
+    keyLight.shadow.camera.far  = 400;
+  } else {
+    ground.position.y = -19;
+    keyLight.shadow.camera.left = -SHADOW_EXT; keyLight.shadow.camera.right = SHADOW_EXT;
+    keyLight.shadow.camera.top  =  SHADOW_EXT; keyLight.shadow.camera.bottom = -SHADOW_EXT;
+    keyLight.shadow.camera.far  = 120;
+  }
+  keyLight.shadow.camera.updateProjectionMatrix();
 }
 
 function buildRingMesh() {
@@ -2713,7 +2748,7 @@ function buildRingMesh() {
   ringMesh = new THREE.Group();
   ringMesh.add(meshOuter, meshInner);
   scene.add(ringMesh);
-  buildFingerMesh(); // Finger folgt der Ringgröße (Innen-Ø = Finger-Ø)
+  applyFingerScale(); // Hand folgt der Ringgröße (Innen-Ø = Finger-Ø)
 }
 
 // ════════════════════════════════════════════════════
@@ -2920,19 +2955,24 @@ function goToStep(n) {
 document.getElementById('vcReset').addEventListener('click', () => { camera.position.set(34, 22, 34); controls.target.set(0, 0, 0); controls.update(); });
 document.getElementById('vcWire').addEventListener('click', e => { wireframeMode = !wireframeMode; e.currentTarget.classList.toggle('active', wireframeMode); state.needsUpdate = true; });
 document.getElementById('vcAnno').addEventListener('click', e => { document.getElementById('viewer').classList.toggle('show-anno'); e.currentTarget.classList.toggle('active'); });
-// Fingeransicht: Umschalten samt Kamerafahrt-Zielen; die vorherige Ansicht
-// wird gemerkt und beim Zurückschalten wiederhergestellt.
+// Fingeransicht: Umschalten samt Nachladen des Handmodells und Kamerafahrt;
+// die vorherige Ansicht wird gemerkt und beim Zurückschalten wiederhergestellt.
 const _prevCam = { pos: new THREE.Vector3(), tgt: new THREE.Vector3() };
 document.getElementById('vcFinger').addEventListener('click', e => {
   fingerMode = !fingerMode;
   e.currentTarget.classList.toggle('active', fingerMode);
-  if (fingerGroup) fingerGroup.visible = fingerMode;
   if (fingerMode) {
     _prevCam.pos.copy(camera.position); _prevCam.tgt.copy(controls.target);
-    camera.position.set(42, 26, 42); controls.target.set(0, 4, 0);
+    ensureHand().then(() => { if (fingerGroup) fingerGroup.visible = fingerMode; });
+    if (fingerGroup) fingerGroup.visible = true;
+    const s = (diameterForEU(state.euSize) / 2) / HAND_R;
+    camera.position.set(65 * s, 23 * s, 65 * s);
+    controls.target.set(0, -11 * s, 0);
   } else {
+    if (fingerGroup) fingerGroup.visible = false;
     camera.position.copy(_prevCam.pos); controls.target.copy(_prevCam.tgt);
   }
+  applyFingerScale();
   controls.update();
 });
 
