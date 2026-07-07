@@ -328,6 +328,7 @@
     color: var(--ink-muted); padding: 10px 0 0;
     font-family: 'Playfair Display', serif; font-style: italic; font-size: 13.5px;
   }
+  .size-note { margin-top: 10px; font-size: 11.5px; line-height: 1.5; color: #a09b8e; }
   .size-hint {
     margin-top: 18px; padding: 14px 18px 14px 20px; background: var(--bg-panel);
     border: 1px solid var(--line); border-left: 2px solid var(--accent);
@@ -1092,6 +1093,7 @@
         <div class="size-grid" id="sizeGrid"></div>
         <div class="size-info" id="sizeInfo">Innen-Ø 17,19 mm · Innenumfang 54,0 mm</div>
         <div class="size-hint" id="sizeHint">Breite Schienen tragen sich enger als ihre Zahl verspricht. Eine Nummer größer wählen — der Finger dankt.</div>
+        <div class="size-note">Deine Größe ist nicht dabei? Andere Größen fertige ich gern auf Anfrage — schreib mir, wir besprechen das persönlich.</div>
         <div class="size-help">
           <button class="size-help-toggle" id="sizeHelpToggle">
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
@@ -1151,7 +1153,7 @@
         <div class="workshop-letter">
           <div class="letter-eyebrow">Notiz aus der Werkstatt</div>
           <div class="letter-text">
-            <p id="letterIntro">Dein Ring wird ein <em>Grat</em>-Profil in <em>5,00 × 1,80 mm</em>, EU-Größe <em>54</em>, in <em>Silber sandrau</em>.</p>
+            <p id="letterIntro">Dein Ring wird ein <em>First</em>-Profil in <em>5,00 × 1,80 mm</em>, EU-Größe <em>54</em>, in <em>Silber sandrau</em>.</p>
             <p id="letterBody">Ich gieße ihn im Delft-Sand, von Hand, hier in Vorarlberg. Außen bleibt die Oberfläche so, wie sie aus der Form kommt — roh und ungeglättet. Innen poliere ich, damit er sitzt wie nichts.</p>
             <p>Deine Sandform trägt die <em id="letterFormNr">Nr. 0000</em>. Sie wird genau einmal gegossen — danach zerschlage ich sie. Kein zweites Stück gleicht diesem. Lieferzeit in der Regel drei bis vier Wochen — den Termin bestätige ich im Angebot.</p>
             <div class="letter-signature">Heinek</div>
@@ -1219,7 +1221,7 @@
   <main class="viewer" id="viewer">
     <canvas id="canvas"></canvas>
     <div class="viewer-overlay">
-      <div class="viewer-title" id="vTitle">Profil 2 · Grat</div>
+      <div class="viewer-title" id="vTitle">Profil 1 · First</div>
       <div class="viewer-meta" id="vMeta">5,00 × 1,80 mm · EU 54</div>
     </div>
     <div class="viewer-watermark">
@@ -1362,11 +1364,11 @@ const ICON = (body) => `<svg viewBox="0 0 80 38" xmlns="http://www.w3.org/2000/s
 
 const PROFILES = {
   A: { letter:'1', label:'First', sub:'Gewölbt mit First — gebrochene Schultern', detail:'Eine breite, leicht gewölbte Oberseite, die zur Mitte sanft zuläuft. Die Schultern sind gebrochen, der Übergang zur Schiene bleibt klar.', feel:'Liegt ruhig auf, mit einer feinen Kante, die du spürst, ohne dass sie drückt.', note:'Der First gibt ihm Haltung. Mein Profil für kräftige Hände.', defaults:{w:4.0,h:1.6}, dxf:[[0.5,0.86744],[0.37366,0.91618],[0.24731,0.95867],[0.12096,0.98869],[-0.0054,1.0],[-0.12904,0.98893],[-0.25269,0.95994],[-0.37634,0.919],[-0.5,0.87209],[-0.5,0.70384],[-0.47253,0.61748],[-0.44444,0.53273],[-0.41514,0.45117],[-0.38399,0.37442],[-0.30547,0.22469],[-0.21731,0.11043],[-0.12234,0.03456],[-0.02338,0.0],[0.07398,0.00815],[0.16917,0.05701],[0.25892,0.14539],[0.33993,0.27209],[0.38383,0.36685],[0.42441,0.47191],[0.46276,0.58383],[0.5,0.69919],[0.5,0.86744]], icon:ICON(`<path d="M63.0,13.1 L57.2,12.3 L51.4,11.7 L45.6,11.2 L39.8,11.0 L34.1,11.2 L28.4,11.6 L22.7,12.3 L17.0,13.0 L17.0,15.7 L18.3,17.1 L19.6,18.5 L20.9,19.8 L22.3,21.0 L25.9,23.4 L30.0,25.2 L34.4,26.4 L38.9,27.0 L43.4,26.9 L47.8,26.1 L51.9,24.7 L55.6,22.6 L57.7,21.1 L59.5,19.4 L61.3,17.7 L63.0,15.8 L63.0,13.1 Z" fill="${FILL}" stroke="${STROKE}" stroke-width="1.3" stroke-linejoin="round"/>`) },
-  B: { letter:'2', label:'Grat', sub:'Linse — beidseitig gewölbt, feine Kante', detail:'Oben und unten gewölbt, zu den Seiten in eine feine Kante auslaufend. Schmal in der Silhouette, präsent im Licht.', feel:'Trägt sich leicht und schlank. Die Seitenkante fängt das Licht, wenn du die Hand bewegst.', note:'Grat heißt beim Guss die feine Naht. Hier ist sie Absicht.', defaults:{w:4.0,h:1.6}, dxf:[[0.48938,0.57578],[0.46718,0.61656],[0.44483,0.65664],[0.42216,0.69531],[0.399,0.73186],[0.37451,0.76675],[0.34943,0.7989],[0.32386,0.82854],[0.29791,0.85592],[0.26297,0.88908],[0.22756,0.91836],[0.19171,0.94344],[0.15545,0.96398],[0.11673,0.98051],[0.07771,0.99186],[0.0385,0.99827],[-0.00079,1.0],[-0.03312,0.99802],[-0.06537,0.99284],[-0.09751,0.98423],[-0.12946,0.97199],[-0.16413,0.95428],[-0.19845,0.93222],[-0.23236,0.90603],[-0.26578,0.87593],[-0.28837,0.85319],[-0.31071,0.82885],[-0.33279,0.80304],[-0.35463,0.77588],[-0.3854,0.73508],[-0.41581,0.69239],[-0.44597,0.64844],[-0.476,0.60382],[-0.48597,0.58517],[-0.49353,0.56065],[-0.49833,0.53175],[-0.5,0.5],[-0.49833,0.46825],[-0.49353,0.43935],[-0.48597,0.41483],[-0.476,0.39618],[-0.44597,0.35156],[-0.41581,0.30761],[-0.3854,0.26492],[-0.35463,0.22412],[-0.33279,0.19696],[-0.31071,0.17115],[-0.28837,0.14681],[-0.26578,0.12407],[-0.23236,0.09397],[-0.19845,0.06778],[-0.16413,0.04572],[-0.12946,0.02801],[-0.09751,0.01577],[-0.06537,0.00716],[-0.03312,0.00198],[-0.00079,0.0],[0.0385,0.00173],[0.07771,0.00814],[0.11673,0.01949],[0.15545,0.03602],[0.19171,0.05656],[0.22756,0.08164],[0.26297,0.11092],[0.29791,0.14408],[0.32386,0.17146],[0.34943,0.2011],[0.37451,0.23325],[0.399,0.26814],[0.41737,0.29687],[0.43542,0.32702],[0.45323,0.35824],[0.47087,0.39017],[0.48045,0.40317],[0.48846,0.42148],[0.4946,0.4442],[0.49855,0.47043],[0.5,0.49837],[0.49888,0.52603],[0.49531,0.55222],[0.48938,0.57578]], icon:ICON(`<path d="M62.5,17.8 L61.5,17.1 L60.5,16.5 L59.4,15.9 L58.4,15.3 L57.2,14.7 L56.1,14.2 L54.9,13.7 L53.7,13.3 L52.1,12.8 L50.5,12.3 L48.8,11.9 L47.2,11.6 L45.4,11.3 L43.6,11.1 L41.8,11.0 L40.0,11.0 L38.5,11.0 L37.0,11.1 L35.5,11.3 L34.0,11.4 L32.5,11.7 L30.9,12.1 L29.3,12.5 L27.8,13.0 L26.7,13.3 L25.7,13.7 L24.7,14.2 L23.7,14.6 L22.3,15.2 L20.9,15.9 L19.5,16.6 L18.1,17.3 L17.6,17.6 L17.3,18.0 L17.1,18.5 L17.0,19.0 L17.1,19.5 L17.3,20.0 L17.6,20.4 L18.1,20.7 L19.5,21.4 L20.9,22.1 L22.3,22.8 L23.7,23.4 L24.7,23.8 L25.7,24.3 L26.7,24.7 L27.8,25.0 L29.3,25.5 L30.9,25.9 L32.5,26.3 L34.0,26.6 L35.5,26.7 L37.0,26.9 L38.5,27.0 L40.0,27.0 L41.8,27.0 L43.6,26.9 L45.4,26.7 L47.2,26.4 L48.8,26.1 L50.5,25.7 L52.1,25.2 L53.7,24.7 L54.9,24.3 L56.1,23.8 L57.2,23.3 L58.4,22.7 L59.2,22.3 L60.0,21.8 L60.8,21.3 L61.7,20.8 L62.1,20.5 L62.5,20.3 L62.8,19.9 L62.9,19.5 L63.0,19.0 L62.9,18.6 L62.8,18.2 L62.5,17.8 Z" fill="${FILL}" stroke="${STROKE}" stroke-width="1.3" stroke-linejoin="round"/>`) },
+  B: { hidden:true, letter:'2', label:'Grat', sub:'Linse — beidseitig gewölbt, feine Kante', detail:'Oben und unten gewölbt, zu den Seiten in eine feine Kante auslaufend. Schmal in der Silhouette, präsent im Licht.', feel:'Trägt sich leicht und schlank. Die Seitenkante fängt das Licht, wenn du die Hand bewegst.', note:'Grat heißt beim Guss die feine Naht. Hier ist sie Absicht.', defaults:{w:4.0,h:1.6}, dxf:[[0.48938,0.57578],[0.46718,0.61656],[0.44483,0.65664],[0.42216,0.69531],[0.399,0.73186],[0.37451,0.76675],[0.34943,0.7989],[0.32386,0.82854],[0.29791,0.85592],[0.26297,0.88908],[0.22756,0.91836],[0.19171,0.94344],[0.15545,0.96398],[0.11673,0.98051],[0.07771,0.99186],[0.0385,0.99827],[-0.00079,1.0],[-0.03312,0.99802],[-0.06537,0.99284],[-0.09751,0.98423],[-0.12946,0.97199],[-0.16413,0.95428],[-0.19845,0.93222],[-0.23236,0.90603],[-0.26578,0.87593],[-0.28837,0.85319],[-0.31071,0.82885],[-0.33279,0.80304],[-0.35463,0.77588],[-0.3854,0.73508],[-0.41581,0.69239],[-0.44597,0.64844],[-0.476,0.60382],[-0.48597,0.58517],[-0.49353,0.56065],[-0.49833,0.53175],[-0.5,0.5],[-0.49833,0.46825],[-0.49353,0.43935],[-0.48597,0.41483],[-0.476,0.39618],[-0.44597,0.35156],[-0.41581,0.30761],[-0.3854,0.26492],[-0.35463,0.22412],[-0.33279,0.19696],[-0.31071,0.17115],[-0.28837,0.14681],[-0.26578,0.12407],[-0.23236,0.09397],[-0.19845,0.06778],[-0.16413,0.04572],[-0.12946,0.02801],[-0.09751,0.01577],[-0.06537,0.00716],[-0.03312,0.00198],[-0.00079,0.0],[0.0385,0.00173],[0.07771,0.00814],[0.11673,0.01949],[0.15545,0.03602],[0.19171,0.05656],[0.22756,0.08164],[0.26297,0.11092],[0.29791,0.14408],[0.32386,0.17146],[0.34943,0.2011],[0.37451,0.23325],[0.399,0.26814],[0.41737,0.29687],[0.43542,0.32702],[0.45323,0.35824],[0.47087,0.39017],[0.48045,0.40317],[0.48846,0.42148],[0.4946,0.4442],[0.49855,0.47043],[0.5,0.49837],[0.49888,0.52603],[0.49531,0.55222],[0.48938,0.57578]], icon:ICON(`<path d="M62.5,17.8 L61.5,17.1 L60.5,16.5 L59.4,15.9 L58.4,15.3 L57.2,14.7 L56.1,14.2 L54.9,13.7 L53.7,13.3 L52.1,12.8 L50.5,12.3 L48.8,11.9 L47.2,11.6 L45.4,11.3 L43.6,11.1 L41.8,11.0 L40.0,11.0 L38.5,11.0 L37.0,11.1 L35.5,11.3 L34.0,11.4 L32.5,11.7 L30.9,12.1 L29.3,12.5 L27.8,13.0 L26.7,13.3 L25.7,13.7 L24.7,14.2 L23.7,14.6 L22.3,15.2 L20.9,15.9 L19.5,16.6 L18.1,17.3 L17.6,17.6 L17.3,18.0 L17.1,18.5 L17.0,19.0 L17.1,19.5 L17.3,20.0 L17.6,20.4 L18.1,20.7 L19.5,21.4 L20.9,22.1 L22.3,22.8 L23.7,23.4 L24.7,23.8 L25.7,24.3 L26.7,24.7 L27.8,25.0 L29.3,25.5 L30.9,25.9 L32.5,26.3 L34.0,26.6 L35.5,26.7 L37.0,26.9 L38.5,27.0 L40.0,27.0 L41.8,27.0 L43.6,26.9 L45.4,26.7 L47.2,26.4 L48.8,26.1 L50.5,25.7 L52.1,25.2 L53.7,24.7 L54.9,24.3 L56.1,23.8 L57.2,23.3 L58.4,22.7 L59.2,22.3 L60.0,21.8 L60.8,21.3 L61.7,20.8 L62.1,20.5 L62.5,20.3 L62.8,19.9 L62.9,19.5 L63.0,19.0 L62.9,18.6 L62.8,18.2 L62.5,17.8 Z" fill="${FILL}" stroke="${STROKE}" stroke-width="1.3" stroke-linejoin="round"/>`) },
   C: { letter:'3', label:'Kissen', sub:'Kissenform — voll und weich gerundet', detail:'Rundum gleich voll, mit weich gerundeten Ecken. Eine satte, ruhige Form ohne harte Kanten.', feel:'Füllt den Finger angenehm aus. Nichts drückt, nichts kantet.', note:'Das Kissen. Wenn es bequem sein soll, nimm das.', defaults:{w:4.0,h:1.6}, dxf:[[0.39588,0.89726],[0.3572,0.91752],[0.31844,0.9362],[0.27957,0.95286],[0.24057,0.96708],[0.17631,0.98448],[0.11175,0.99513],[0.04701,0.99998],[-0.0178,1.0],[-0.08199,0.99591],[-0.14606,0.98724],[-0.20992,0.97319],[-0.27346,0.95298],[-0.30407,0.94081],[-0.33459,0.92723],[-0.36505,0.91246],[-0.39545,0.89672],[-0.43746,0.85372],[-0.47054,0.77855],[-0.49222,0.67913],[-0.5,0.56341],[-0.5,0.45885],[-0.4928,0.34744],[-0.47265,0.25061],[-0.44168,0.17556],[-0.40204,0.12951],[-0.39025,0.12167],[-0.37844,0.11405],[-0.36662,0.10666],[-0.35477,0.09954],[-0.27317,0.05814],[-0.19069,0.02871],[-0.10759,0.01],[-0.02413,0.00079],[0.05089,0.0],[0.12575,0.00736],[0.2002,0.02437],[0.27399,0.05252],[0.30645,0.06887],[0.33876,0.08735],[0.37095,0.10762],[0.40303,0.1293],[0.44231,0.17577],[0.47296,0.25078],[0.49289,0.34721],[0.5,0.45797],[0.5,0.56419],[0.49226,0.67962],[0.47068,0.77887],[0.43774,0.85405],[0.39588,0.89726]], icon:ICON(`<path d="M58.2,12.6 L56.4,12.3 L54.6,12.0 L52.9,11.8 L51.1,11.5 L48.1,11.2 L45.1,11.1 L42.2,11.0 L39.2,11.0 L36.2,11.1 L33.3,11.2 L30.3,11.4 L27.4,11.8 L26.0,11.9 L24.6,12.2 L23.2,12.4 L21.8,12.7 L19.9,13.3 L18.4,14.5 L17.4,16.1 L17.0,18.0 L17.0,19.7 L17.3,21.4 L18.3,23.0 L19.7,24.2 L21.5,24.9 L22.0,25.1 L22.6,25.2 L23.1,25.3 L23.7,25.4 L27.4,26.1 L31.2,26.5 L35.1,26.8 L38.9,27.0 L42.3,27.0 L45.8,26.9 L49.2,26.6 L52.6,26.2 L54.1,25.9 L55.6,25.6 L57.1,25.3 L58.5,24.9 L60.3,24.2 L61.8,23.0 L62.7,21.4 L63.0,19.7 L63.0,18.0 L62.6,16.1 L61.7,14.5 L60.1,13.3 L58.2,12.6 Z" fill="${FILL}" stroke="${STROKE}" stroke-width="1.3" stroke-linejoin="round"/>`) },
   D: { letter:'4', label:'Kuppel', sub:'Bombiert — gewölbt außen, flach innen', detail:'Außen eine ruhige Kuppel, innen flach an den Finger gelegt. Die klassische Form, wenn man eine will.', feel:'Sitzt satt und sicher. Außen rund, innen ohne Druckpunkt.', note:'Die Kuppel ist der Klassiker. Da macht man nichts falsch.', defaults:{w:4.0,h:1.6}, dxf:[[0.47362,0.4805],[0.46812,0.49877],[0.46246,0.51664],[0.45661,0.53398],[0.45051,0.55068],[0.43913,0.57829],[0.42707,0.60405],[0.41453,0.62846],[0.40173,0.65203],[0.37453,0.70025],[0.34694,0.7465],[0.31883,0.79027],[0.29007,0.83108],[0.25635,0.87337],[0.22171,0.91047],[0.18628,0.94166],[0.15016,0.96622],[0.11371,0.98359],[0.07686,0.99449],[0.03976,0.99969],[0.00256,1.0],[-0.03568,0.99581],[-0.07375,0.98683],[-0.11153,0.9726],[-0.1489,0.9527],[-0.18851,0.92465],[-0.22744,0.89012],[-0.2656,0.84972],[-0.30292,0.80405],[-0.32651,0.772],[-0.34963,0.73781],[-0.37217,0.70126],[-0.39405,0.66216],[-0.41252,0.62598],[-0.43056,0.58824],[-0.44832,0.54945],[-0.46593,0.51014],[-0.48436,0.455],[-0.49588,0.38968],[-0.5,0.31849],[-0.49622,0.24572],[-0.48472,0.17881],[-0.46685,0.12428],[-0.4439,0.08509],[-0.41715,0.06419],[-0.37002,0.05208],[-0.32287,0.04043],[-0.27569,0.02967],[-0.22847,0.02027],[-0.1711,0.01119],[-0.11367,0.00478],[-0.05621,0.00105],[0.00128,0.0],[0.06421,0.00189],[0.12713,0.00669],[0.19001,0.01406],[0.25284,0.02365],[0.29587,0.03132],[0.33887,0.03965],[0.38185,0.04843],[0.42484,0.05743],[0.44879,0.08094],[0.46926,0.11941],[0.48528,0.17045],[0.49587,0.2317],[0.5,0.29812],[0.49747,0.36398],[0.48857,0.4259],[0.47362,0.4805]], icon:ICON(`<path d="M61.8,19.3 L61.5,19.0 L61.3,18.7 L61.0,18.5 L60.7,18.2 L60.2,17.7 L59.6,17.3 L59.1,16.9 L58.5,16.6 L57.2,15.8 L56.0,15.1 L54.7,14.4 L53.3,13.7 L51.8,13.0 L50.2,12.4 L48.6,11.9 L46.9,11.5 L45.2,11.3 L43.5,11.1 L41.8,11.0 L40.1,11.0 L38.4,11.1 L36.6,11.2 L34.9,11.4 L33.2,11.8 L31.3,12.2 L29.5,12.8 L27.8,13.4 L26.1,14.1 L25.0,14.6 L23.9,15.2 L22.9,15.8 L21.9,16.4 L21.0,17.0 L20.2,17.6 L19.4,18.2 L18.6,18.8 L17.7,19.7 L17.2,20.8 L17.0,21.9 L17.2,23.1 L17.7,24.1 L18.5,25.0 L19.6,25.6 L20.8,26.0 L23.0,26.2 L25.1,26.4 L27.3,26.5 L29.5,26.7 L32.1,26.8 L34.8,26.9 L37.4,27.0 L40.1,27.0 L43.0,27.0 L45.8,26.9 L48.7,26.8 L51.6,26.6 L53.6,26.5 L55.6,26.4 L57.6,26.2 L59.5,26.1 L60.6,25.7 L61.6,25.1 L62.3,24.3 L62.8,23.3 L63.0,22.2 L62.9,21.2 L62.5,20.2 L61.8,19.3 Z" fill="${FILL}" stroke="${STROKE}" stroke-width="1.3" stroke-linejoin="round"/>`) },
   E: { letter:'5', label:'Balken', sub:'Rechteck — flach mit gebrochenen Kanten', detail:'Flach oben, flach an den Seiten, die Kanten nur leicht gebrochen. Klar und gerade, ohne Schnörkel.', feel:'Kantig und ehrlich. Du spürst die Kanten — das gehört dazu.', note:'Gerade Linien, klarer Kopf. Für die, die es reduziert mögen.', defaults:{w:4.0,h:1.6}, dxf:[[-0.46753,1.0],[-0.48017,0.99345],[-0.49049,0.97559],[-0.49745,0.9491],[-0.5,0.91667],[-0.5,0.16667],[-0.4949,0.10179],[-0.48098,0.04882],[-0.46034,0.0131],[-0.43506,0.0],[0.43506,0.0],[0.46034,0.0131],[0.48098,0.04882],[0.4949,0.10179],[0.5,0.16667],[0.5,0.91667],[0.49745,0.9491],[0.49049,0.97559],[0.48017,0.99345],[0.46753,1.0],[-0.46753,1.0]], icon:ICON(`<path d="M18.5,11.0 L17.9,11.1 L17.4,11.4 L17.1,11.8 L17.0,12.3 L17.0,24.3 L17.2,25.4 L17.9,26.2 L18.8,26.8 L20.0,27.0 L60.0,27.0 L61.2,26.8 L62.1,26.2 L62.8,25.4 L63.0,24.3 L63.0,12.3 L62.9,11.8 L62.6,11.4 L62.1,11.1 L61.5,11.0 L18.5,11.0 Z" fill="${FILL}" stroke="${STROKE}" stroke-width="1.3" stroke-linejoin="round"/>`) },
-  F: { letter:'6', label:'Kiesel', sub:'Rund — voll und gleichmäßig gewölbt', detail:'Rundum gewölbt, fast wie ein Kiesel aus dem Bach. Keine Kante findet den Anfang.', feel:'Rollt weich über die Haut. Das ruhigste Tragegefühl von allen.', note:'Wie ein Stein, den das Wasser rund geschliffen hat. Nur dass ich es war.', defaults:{w:4.0,h:1.6}, dxf:[[0.45632,0.74731],[0.41225,0.7932],[0.36797,0.83714],[0.32324,0.87719],[0.27787,0.9114],[0.2446,0.93159],[0.21097,0.94832],[0.17709,0.96217],[0.14307,0.97375],[0.10751,0.98387],[0.07191,0.99183],[0.03626,0.99732],[0.00056,1.0],[-0.03675,0.99951],[-0.07405,0.99555],[-0.11128,0.98808],[-0.14836,0.97703],[-0.18305,0.96337],[-0.21752,0.94667],[-0.25176,0.9271],[-0.28573,0.90483],[-0.32492,0.87584],[-0.36381,0.84427],[-0.40249,0.81099],[-0.44108,0.77685],[-0.46578,0.72369],[-0.48432,0.65758],[-0.49596,0.5819],[-0.5,0.5],[-0.49596,0.4181],[-0.48432,0.34242],[-0.46578,0.27631],[-0.44108,0.22315],[-0.40249,0.18901],[-0.36381,0.15573],[-0.32492,0.12416],[-0.28573,0.09517],[-0.25176,0.0729],[-0.21752,0.05333],[-0.18305,0.03663],[-0.14836,0.02297],[-0.11128,0.01192],[-0.07405,0.00445],[-0.03675,0.00049],[0.00056,0.0],[0.03626,0.00268],[0.07191,0.00817],[0.10751,0.01613],[0.14307,0.02625],[0.17709,0.03783],[0.21097,0.05168],[0.2446,0.06841],[0.27787,0.0886],[0.32324,0.12281],[0.36797,0.16286],[0.41225,0.2068],[0.45632,0.25269],[0.47486,0.30443],[0.48857,0.36433],[0.49708,0.43023],[0.5,0.5],[0.49708,0.56977],[0.48857,0.63567],[0.47486,0.69557],[0.45632,0.74732]], icon:ICON(`<path d="M61.0,15.0 L59.0,14.3 L56.9,13.6 L54.9,13.0 L52.8,12.4 L51.3,12.1 L49.7,11.8 L48.1,11.6 L46.6,11.4 L44.9,11.3 L43.3,11.1 L41.7,11.0 L40.0,11.0 L38.3,11.0 L36.6,11.1 L34.9,11.2 L33.2,11.4 L31.6,11.6 L30.0,11.9 L28.4,12.2 L26.9,12.5 L25.1,13.0 L23.3,13.5 L21.5,14.0 L19.7,14.6 L18.6,15.4 L17.7,16.5 L17.2,17.7 L17.0,19.0 L17.2,20.3 L17.7,21.5 L18.6,22.6 L19.7,23.4 L21.5,24.0 L23.3,24.5 L25.1,25.0 L26.9,25.5 L28.4,25.8 L30.0,26.1 L31.6,26.4 L33.2,26.6 L34.9,26.8 L36.6,26.9 L38.3,27.0 L40.0,27.0 L41.7,27.0 L43.3,26.9 L44.9,26.7 L46.6,26.6 L48.1,26.4 L49.7,26.2 L51.3,25.9 L52.8,25.6 L54.9,25.0 L56.9,24.4 L59.0,23.7 L61.0,23.0 L61.8,22.1 L62.5,21.2 L62.9,20.1 L63.0,19.0 L62.9,17.9 L62.5,16.8 L61.8,15.9 L61.0,15.0 Z" fill="${FILL}" stroke="${STROKE}" stroke-width="1.3" stroke-linejoin="round"/>`) },
+  F: { hidden:true, letter:'6', label:'Kiesel', sub:'Rund — voll und gleichmäßig gewölbt', detail:'Rundum gewölbt, fast wie ein Kiesel aus dem Bach. Keine Kante findet den Anfang.', feel:'Rollt weich über die Haut. Das ruhigste Tragegefühl von allen.', note:'Wie ein Stein, den das Wasser rund geschliffen hat. Nur dass ich es war.', defaults:{w:4.0,h:1.6}, dxf:[[0.45632,0.74731],[0.41225,0.7932],[0.36797,0.83714],[0.32324,0.87719],[0.27787,0.9114],[0.2446,0.93159],[0.21097,0.94832],[0.17709,0.96217],[0.14307,0.97375],[0.10751,0.98387],[0.07191,0.99183],[0.03626,0.99732],[0.00056,1.0],[-0.03675,0.99951],[-0.07405,0.99555],[-0.11128,0.98808],[-0.14836,0.97703],[-0.18305,0.96337],[-0.21752,0.94667],[-0.25176,0.9271],[-0.28573,0.90483],[-0.32492,0.87584],[-0.36381,0.84427],[-0.40249,0.81099],[-0.44108,0.77685],[-0.46578,0.72369],[-0.48432,0.65758],[-0.49596,0.5819],[-0.5,0.5],[-0.49596,0.4181],[-0.48432,0.34242],[-0.46578,0.27631],[-0.44108,0.22315],[-0.40249,0.18901],[-0.36381,0.15573],[-0.32492,0.12416],[-0.28573,0.09517],[-0.25176,0.0729],[-0.21752,0.05333],[-0.18305,0.03663],[-0.14836,0.02297],[-0.11128,0.01192],[-0.07405,0.00445],[-0.03675,0.00049],[0.00056,0.0],[0.03626,0.00268],[0.07191,0.00817],[0.10751,0.01613],[0.14307,0.02625],[0.17709,0.03783],[0.21097,0.05168],[0.2446,0.06841],[0.27787,0.0886],[0.32324,0.12281],[0.36797,0.16286],[0.41225,0.2068],[0.45632,0.25269],[0.47486,0.30443],[0.48857,0.36433],[0.49708,0.43023],[0.5,0.5],[0.49708,0.56977],[0.48857,0.63567],[0.47486,0.69557],[0.45632,0.74732]], icon:ICON(`<path d="M61.0,15.0 L59.0,14.3 L56.9,13.6 L54.9,13.0 L52.8,12.4 L51.3,12.1 L49.7,11.8 L48.1,11.6 L46.6,11.4 L44.9,11.3 L43.3,11.1 L41.7,11.0 L40.0,11.0 L38.3,11.0 L36.6,11.1 L34.9,11.2 L33.2,11.4 L31.6,11.6 L30.0,11.9 L28.4,12.2 L26.9,12.5 L25.1,13.0 L23.3,13.5 L21.5,14.0 L19.7,14.6 L18.6,15.4 L17.7,16.5 L17.2,17.7 L17.0,19.0 L17.2,20.3 L17.7,21.5 L18.6,22.6 L19.7,23.4 L21.5,24.0 L23.3,24.5 L25.1,25.0 L26.9,25.5 L28.4,25.8 L30.0,26.1 L31.6,26.4 L33.2,26.6 L34.9,26.8 L36.6,26.9 L38.3,27.0 L40.0,27.0 L41.7,27.0 L43.3,26.9 L44.9,26.7 L46.6,26.6 L48.1,26.4 L49.7,26.2 L51.3,25.9 L52.8,25.6 L54.9,25.0 L56.9,24.4 L59.0,23.7 L61.0,23.0 L61.8,22.1 L62.5,21.2 L62.9,20.1 L63.0,19.0 L62.9,17.9 L62.5,16.8 L61.8,15.9 L61.0,15.0 Z" fill="${FILL}" stroke="${STROKE}" stroke-width="1.3" stroke-linejoin="round"/>`) },
   H: { letter:'7', label:'Fass', sub:'Fass — gewölbt mit gebrochenen Flanken', detail:'Voll gewölbt, die Flanken aber flach gebrochen — wie die Dauben eines Fasses. Rund und kantig zugleich.', feel:'Hat Körper in der Hand, mit Flächen, an denen das Licht bricht.', note:'Fast wie das Kissen, nur mit Fasen.', defaults:{w:4.0,h:1.6}, dxf:[[0.5,0.83806],[0.43541,0.87534],[0.37071,0.91061],[0.3058,0.94186],[0.24057,0.96708],[0.17631,0.98448],[0.11175,0.99513],[0.04701,0.99998],[-0.0178,1.0],[-0.08199,0.99591],[-0.14606,0.98724],[-0.20992,0.97319],[-0.27346,0.95298],[-0.33038,0.92918],[-0.38705,0.90116],[-0.44357,0.87031],[-0.5,0.83806],[-0.5,0.20019],[-0.46384,0.17335],[-0.42762,0.14717],[-0.39128,0.12235],[-0.35477,0.09954],[-0.27317,0.05814],[-0.19069,0.02871],[-0.10759,0.01],[-0.02413,0.00079],[0.05089,0.0],[0.12575,0.00736],[0.2002,0.02437],[0.27399,0.05252],[0.33097,0.08271],[0.38754,0.11867],[0.44384,0.15847],[0.5,0.20019],[0.5,0.83806]], icon:ICON(`<path d="M63.0,13.6 L60.0,13.0 L57.1,12.4 L54.1,11.9 L51.1,11.5 L48.1,11.2 L45.1,11.1 L42.2,11.0 L39.2,11.0 L36.2,11.1 L33.3,11.2 L30.3,11.4 L27.4,11.8 L24.8,12.1 L22.2,12.6 L19.6,13.1 L17.0,13.6 L17.0,23.8 L18.7,24.2 L20.3,24.6 L22.0,25.0 L23.7,25.4 L27.4,26.1 L31.2,26.5 L35.1,26.8 L38.9,27.0 L42.3,27.0 L45.8,26.9 L49.2,26.6 L52.6,26.2 L55.2,25.7 L57.8,25.1 L60.4,24.5 L63.0,23.8 L63.0,13.6 Z" fill="${FILL}" stroke="${STROKE}" stroke-width="1.3" stroke-linejoin="round"/>`) }
 };
 
@@ -1525,7 +1527,7 @@ function estimatePrice() {
   return Math.round(p);
 }
 
-const state = { profileKey:'B', width:5.0, height:1.70, proportion:'mittel', euSize:54, step:1, material:'silber-sandrau', sepia:false, hammer:false, needsUpdate:false };
+const state = { profileKey:'A', width:5.0, height:1.80, proportion:'mittel', euSize:54, step:1, material:'silber-sandrau', sepia:false, hammer:false, needsUpdate:false };
 
 // ── Speichern / Fortsetzen ────────────────────────────────────────────────
 // Hält die Konfiguration im Browser, damit ein Neuladen den Entwurf nicht
@@ -2399,6 +2401,26 @@ let ringSpin = 0; // aktueller Drehwinkel des Rings (bleibt über Neuaufbauten e
 // Welle 4 — weiche Mikro-Interaktionen:
 let dispW = state.width, dispH = state.height; // dezent mitlaufende Maßzahlen
 
+// ── Maß-Tween ─────────────────────────────────────────────────────────────
+// Größen- und Proportionswechsel morphen die Geometrie kontinuierlich:
+// REND hält die aktuell GERENDERTEN Maße, die 1,5 s lang weich auf die
+// Zielwerte des States zulaufen. buildRingMesh liest REND, alle Rechnungen
+// (Preis, Zettel, PDF) lesen weiterhin die finalen State-Werte.
+const REND = { w: state.width, h: state.height, dia: null };
+let geomTween = null;
+const GEOM_TWEEN_DUR = 1.5; // Sekunden
+function startGeomTween() {
+  geomTween = {
+    t: 0,
+    fw: REND.w, fh: REND.h, fd: REND.dia ?? diameterForEU(state.euSize),
+    tw: state.width, th: state.height, td: diameterForEU(state.euSize)
+  };
+  if (REDUCED_MOTION) { // Barrierefreiheit: direkt springen statt animieren
+    REND.w = state.width; REND.h = state.height; REND.dia = geomTween.td;
+    geomTween = null; state.needsUpdate = true;
+  }
+}
+
 // ── Majestätische Ring-Transition (Dreierschritt, cinematisch träge) ──────
 // Zeitbasiert (Delta-Zeit) statt pro Frame → identisches Tempo auf 60/120 Hz.
 // Phase 'out': alter Ring blendet über ~0.6 s langsam aus + skaliert herunter.
@@ -2408,8 +2430,8 @@ let ringPhase = 'idle';      // 'idle' | 'out' | 'in'
 let ringProg  = 0;           // linearer Fortschritt 0..1 INNERHALB der aktuellen Phase
 let pendingRebuild = false;  // wartet auf den geräuschlosen Tausch
 let _lastFrameT = 0;         // performance.now() des letzten Frames (für Delta-Zeit)
-const OUT_DUR = 0.62;        // Sekunden — langsames, elegantes Ausblenden
-const IN_DUR  = 1.38;        // Sekunden — extrem smoothes, majestätisches Einblenden
+const OUT_DUR = 0.55;        // Sekunden — Ausblenden (Gesamtdauer 1,5 s)
+const IN_DUR  = 0.95;        // Sekunden — Wiedereinblenden, ohne Glut
 const SCALE_FLOOR = 0.9;     // Zielskalierung bei voller Unsichtbarkeit
 // Träge Dämpfungskurven:
 const easeOutQuint   = t => 1 - Math.pow(1 - t, 5);                       // schleifender Auslauf
@@ -2560,20 +2582,21 @@ const _spinTilt = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0
 const _spinY = new THREE.Vector3(0, 1, 0);
 const _spinQ = new THREE.Quaternion();
 
-// ── Fingeransicht: organische Hand ─────────────────────────────────────
-// Prozedural erzeugte menschliche Hand (eigenes Werk, keine Fremdlizenz):
-// als Distanzfeld aus verschmolzenen Kapseln modelliert (weiche Knöchel,
-// Schwimmhäute, Daumen-/Kleinfingerballen) und per Marching Cubes ver-
-// netzt. Wird erst beim ersten Umschalten nachgeladen; Startlast bleibt
-// unberührt. Modell in Millimetern, fertig ausgerichtet: Ringfinger senk-
-// recht durch den Ursprung, Ringsitz am Fingeransatz (per Raycast ver-
-// messen). Skalierung: Innen-Ø der gewählten Größe = Finger-Ø am Sitz.
+// ── Fingeransicht: Präsentierhand ──────────────────────────────────────
+// Vom Betreiber bereitgestelltes Handmodell (hand.stl), wasserdicht
+// remeshed, dezimiert und vor-ausgerichtet exportiert: Ringfinger senk-
+// recht durch den Ursprung, Ringsitz (laut Vorgabe EU 47) am Ursprung.
+// Wird erst beim ersten Umschalten nachgeladen; Startlast bleibt unbe-
+// rührt. Skalierung: Innen-Ø der gewählten Größe = Finger-Ø am Sitz.
+// KALIBRIERUNG: Sollte der Sitz nach Sichtprüfung nicht exakt stimmen,
+// sind HAND_T (Verschiebung in Modell-mm), HAND_Q (Drehung) und HAND_R
+// (Sitzradius) die einzigen Stellschrauben — kein Rebuild des Modells nötig.
 let fingerMode = false, fingerGroup = null, handLoading = false;
 const HAND_URL = '/vendor/models/hand.obj';
 const HAND_Q = new THREE.Quaternion(0, 0, 0, 1);   // Modell ist vor-ausgerichtet
-const HAND_T = new THREE.Vector3(0, -6, 0);        // Sitz auf rundesten Querschnitt gelegt
-const HAND_R = 7.95;          // Fingerradius am Ringsitz (Modell-mm, raycast-vermessen)
-const HAND_MIN_Y = -150;      // Unterkante Handgelenk inkl. Versatz (Modell-mm)
+const HAND_T = new THREE.Vector3(0, 0, 0);         // Ausrichtung ist im Modell eingebacken
+const HAND_R = 7.48;          // Ringsitz = EU 47 laut Modellvorgabe (47 mm Umfang / 2π)
+const HAND_MIN_Y = -102;      // Unterkante des ausgerichteten Modells (Modell-mm)
 const HAND_MAT = new THREE.MeshStandardMaterial({
   color: 0xc9a78c, roughness: 0.62, metalness: 0.0, envMapIntensity: 0.45
 });
@@ -2656,8 +2679,8 @@ function buildRingMesh() {
     scene.remove(ringMesh); ringMesh = null;
   }
 
-  const profile = profilePoints(PROFILES[state.profileKey], state.width, state.height);
-  const innerR = diameterForEU(state.euSize) / 2;
+  const profile = profilePoints(PROFILES[state.profileKey], REND.w, REND.h);
+  const innerR = (REND.dia ?? diameterForEU(state.euSize)) / 2;
   // Volle Auflösung — es gibt nur noch diskrete Wechsel, kein Live-Ziehen.
   const N = 256, P = profile.length;
 
@@ -2758,6 +2781,7 @@ function buildProfileGrid() {
   const grid = document.getElementById('profileGrid'); grid.innerHTML = '';
   Object.keys(PROFILES).forEach(key => {
     const p = PROFILES[key];
+    if (p.hidden) return; // im Datenbestand behalten, aus der Auswahl nehmen
     const card = document.createElement('button');
     card.className = 'profile-card' + (key === state.profileKey ? ' active' : '');
     card.dataset.key = key;
@@ -2795,7 +2819,7 @@ function buildSizeGrid() {
       state.euSize = s;
       applyProportionToState();
       document.querySelectorAll('.size-cell').forEach(c => c.classList.toggle('active', parseInt(c.textContent) === s));
-      updateUI(); requestRingTransition();
+      updateUI(); startGeomTween();
     });
     grid.appendChild(cell);
   });
@@ -2845,8 +2869,7 @@ function selectProportion(step) {
   if (!PROPORTIONS[step]) return;
   state.proportion = step;
   applyProportionToState();
-  updateUI(); requestRingTransition();
-  state.needsUpdate = true;
+  updateUI(); startGeomTween();
 }
 
 
@@ -2967,7 +2990,7 @@ document.getElementById('vcFinger').addEventListener('click', e => {
     if (fingerGroup) fingerGroup.visible = true;
     const s = (diameterForEU(state.euSize) / 2) / HAND_R;
     camera.position.set(210 * s, 80 * s, 210 * s);  // ~30 cm Abstand: ganze Hand im Bild
-    controls.target.set(0, -52 * s, 0);             // Blick auf die Handmitte
+    controls.target.set(0, -34 * s, 0);             // Blick auf die Handmitte
     controls.maxDistance = 900;
   } else {
     if (fingerGroup) fingerGroup.visible = false;
@@ -3901,6 +3924,17 @@ function animate() {
     }
   }
 
+  // Maß-Tween: Geometrie läuft weich auf die Zielmaße zu (ein Rebuild je Frame)
+  if (geomTween) {
+    geomTween.t = Math.min(1, geomTween.t + dt / GEOM_TWEEN_DUR);
+    const e = easeInOutCubic(geomTween.t);
+    REND.w   = geomTween.fw + (geomTween.tw - geomTween.fw) * e;
+    REND.h   = geomTween.fh + (geomTween.th - geomTween.fh) * e;
+    REND.dia = geomTween.fd + (geomTween.td - geomTween.fd) * e;
+    state.needsUpdate = true;
+    if (geomTween.t >= 1) geomTween = null;
+  }
+
   // Direkt-Änderungen (z. B. Drahtgitter): sofortiger Rebuild ohne Transition,
   // höchstens EINMAL pro Frame (rAF-Debouncing, butterweiche 60 FPS).
   if (state.needsUpdate) { buildRingMesh(); state.needsUpdate = false; }
@@ -3931,8 +3965,7 @@ function animate() {
       const v = easeOutQuint(ringProg);                // 0 → 1, langer Auslauf
       ringMesh.scale.setScalar(SCALE_FLOOR + (1 - SCALE_FLOOR) * v);
       setRingOpacity(ringMesh, v);
-      // Die Glut: stark beim ersten Sichtbarwerden, kühlt mit dem Einblenden ab.
-      setRingGlow(ringMesh, 0.9 * Math.pow(1 - ringProg, 1.7));
+      // Bewusst OHNE Glut: die Glut gehört allein dem Abguss-Moment (Schritt v).
     }
     _spinQ.setFromAxisAngle(_spinY, ringSpin);
     ringMesh.quaternion.copy(_spinQ);
