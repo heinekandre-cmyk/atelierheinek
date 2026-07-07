@@ -782,6 +782,27 @@
   .watermark-label { font-size: 9px; letter-spacing: 0.34em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 4px; font-family: 'Archivo', sans-serif; }
   .watermark-text { font-family: 'Playfair Display', serif; font-style: italic; font-size: 15px; color: var(--ink-muted); letter-spacing: 0.005em; line-height: 1.3; }
   .watermark-form { font-size: 8.5px; letter-spacing: 0.28em; text-transform: uppercase; color: var(--ink-faint); margin-top: 7px; font-family: 'Archivo', sans-serif; }
+  /* Fingeransicht (Umschalter im Viewer) */
+  .finger-view {
+    position: absolute; inset: 0; z-index: 2;
+    display: none; flex-direction: column; align-items: center; justify-content: center;
+  }
+  .viewer.show-finger .finger-view { display: flex; }
+  .viewer.show-finger #canvas, .viewer.show-finger .dim-anno { visibility: hidden; }
+  .finger-view svg { height: min(72%, 520px); max-width: 86%; }
+  .finger-view .f-silhouette { fill: #26221d; stroke: rgba(200, 184, 150, 0.28); stroke-width: 0.3; }
+  .finger-view .f-crease { fill: none; stroke: rgba(200, 184, 150, 0.16); stroke-width: 0.28; }
+  .finger-view .f-band-edge { fill: none; stroke: rgba(0, 0, 0, 0.35); stroke-width: 0.18; }
+  .finger-view .f-dim { stroke: var(--ink-faint); stroke-width: 0.22; }
+  .finger-view text {
+    font-family: 'Archivo', sans-serif; font-weight: 400; font-size: 2.7px;
+    letter-spacing: 0.32px; fill: var(--ink-muted); text-transform: uppercase;
+  }
+  .finger-view text.f-em { fill: var(--sand); }
+  .finger-note {
+    margin-top: 14px; font-size: 9.5px; letter-spacing: 0.22em;
+    text-transform: uppercase; color: var(--ink-faint);
+  }
   .viewer-controls { position: absolute; bottom: 28px; right: 32px; display: flex; gap: 5px; z-index: 3; }
   .vc-btn {
     width: 38px; height: 38px; background: var(--bg-panel); border: 1px solid var(--line);
@@ -1113,7 +1134,7 @@
         <div class="prop-grid" id="propGrid"><!-- drei feste Stufen, in JS gebaut --></div>
         <div class="prop-readout">
           <span class="prop-readout-label">Gewählte Maße</span>
-          <span class="prop-readout-dims"><span id="widthVal">5,00<span>mm</span></span> &times; <span id="heightVal">1,70<span>mm</span></span></span>
+          <span class="prop-readout-dims"><span id="widthVal">5,00<span>mm</span></span> &times; <span id="heightVal">1,80<span>mm</span></span></span>
         </div>
 
       </section>
@@ -1151,7 +1172,7 @@
         <div class="workshop-letter">
           <div class="letter-eyebrow">Notiz aus der Werkstatt</div>
           <div class="letter-text">
-            <p id="letterIntro">Dein Ring wird ein <em>Grat</em>-Profil in <em>5,00 × 1,70 mm</em>, EU-Größe <em>54</em>, in <em>Silber sandrau</em>.</p>
+            <p id="letterIntro">Dein Ring wird ein <em>Grat</em>-Profil in <em>5,00 × 1,80 mm</em>, EU-Größe <em>54</em>, in <em>Silber sandrau</em>.</p>
             <p id="letterBody">Ich gieße ihn im Delft-Sand, von Hand, hier in Vorarlberg. Außen bleibt die Oberfläche so, wie sie aus der Form kommt — roh und ungeglättet. Innen poliere ich, damit er sitzt wie nichts.</p>
             <p>Deine Sandform trägt die <em id="letterFormNr">Nr. 0000</em>. Sie wird genau einmal gegossen — danach zerschlage ich sie. Kein zweites Stück gleicht diesem. Lieferzeit in der Regel drei bis vier Wochen — den Termin bestätige ich im Angebot.</p>
             <div class="letter-signature">Heinek</div>
@@ -1220,7 +1241,7 @@
     <canvas id="canvas"></canvas>
     <div class="viewer-overlay">
       <div class="viewer-title" id="vTitle">Profil 2 · Grat</div>
-      <div class="viewer-meta" id="vMeta">5,00 × 1,70 mm · EU 54</div>
+      <div class="viewer-meta" id="vMeta">5,00 × 1,80 mm · EU 54</div>
     </div>
     <div class="viewer-watermark">
       <div class="watermark-label">Atelier Heinek</div>
@@ -1237,12 +1258,22 @@
       <button class="vc-btn" id="vcWire" title="Drahtgitter" aria-label="Drahtgitter">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="9" ry="3"/><line x1="3" y1="12" x2="21" y2="12"/></svg>
       </button>
+      <button class="vc-btn" id="vcFinger" title="Am Finger zeigen" aria-label="Am Finger zeigen">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 21V7a3 3 0 0 1 6 0v14"/><path d="M9 12h12" stroke-width="2.2"/></svg>
+      </button>
       <button class="vc-btn" id="vcReset" title="Ansicht zurücksetzen" aria-label="Ansicht zurücksetzen">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
       </button>
     </div>
+    <!-- Fingeransicht: maßstabsgetreue Silhouette. Der Innendurchmesser des
+         Rings IST der Fingerdurchmesser — die Proportionen stimmen exakt,
+         nur die absolute Bildschirmgröße nicht (Geräte-DPI unbekannt). -->
+    <div class="finger-view" id="fingerView">
+      <svg id="fingerSvg" role="img" aria-label="Ring am Finger, Proportionen maßstabsgetreu"></svg>
+      <div class="finger-note">Proportionen maßstabsgetreu · Darstellung nicht in Originalgröße</div>
+    </div>
     <div class="dim-anno" id="annoW" style="top:30%;left:30%;">Breite · <em id="annoWval">5,00 mm</em></div>
-    <div class="dim-anno" id="annoH" style="top:50%;left:72%;">Höhe · <em id="annoHval">1,70 mm</em></div>
+    <div class="dim-anno" id="annoH" style="top:50%;left:72%;">Höhe · <em id="annoHval">1,80 mm</em></div>
     <div class="dim-anno" id="annoD" style="top:72%;left:48%;">Innen-Ø · <em id="annoDval">17,19 mm</em></div>
   </main>
 </div>
@@ -1459,9 +1490,9 @@ function diameterForEU(size) { return size / Math.PI; }
 // über der 6-mm-Schwelle → der Größen-Hinweis ("eine Nummer größer")
 // erscheint bei Breit in jeder Größe.
 const PROPORTIONS = {
-  schmal: { label:'Schmal',    sub:'zurückhaltend, leicht', width:3.0, height:1.50 },
-  mittel: { label:'Klassisch', sub:'die gängigste Wahl',    width:5.0, height:1.70 },
-  breit:  { label:'Breit',     sub:'präsent, kräftig',      width:7.0, height:2.00 }
+  schmal: { label:'Schmal',    sub:'zurückhaltend, leicht', width:3.0, height:1.40 },
+  mittel: { label:'Klassisch', sub:'die gängigste Wahl',    width:5.0, height:1.80 },
+  breit:  { label:'Breit',     sub:'präsent, kräftig',      width:7.0, height:2.20 }
 };
 const PROP_ORDER = ['schmal', 'mittel', 'breit'];
 function dimsForProportion(step) {
@@ -2763,6 +2794,47 @@ function selectProportion(step) {
   state.needsUpdate = true;
 }
 
+// ── Fingeransicht ──────────────────────────────────────────────────────
+// Seitenansicht im Maßstab: viewBox rechnet direkt in Millimetern.
+// Finger-Ø = Innen-Ø des Rings, Bandbreite = Ringbreite, Überstand = Ringhöhe.
+function renderFingerView() {
+  const dia = diameterForEU(state.euSize), w = state.width, h = state.height;
+  const r = dia / 2, pad = 10, fingerLen = 58;
+  const cx = r + h + pad + 2;                  // Fingerachse
+  const W = dia + 2 * h + pad * 2 + 26;        // rechts Platz für Maßlinien
+  const H = fingerLen + pad * 2;
+  const yTip = pad + r;                        // Kuppenzentrum
+  const ringY = yTip + r * 0.9 + 7;            // Bandoberkante unterhalb der Kuppe
+  const tw = r * 0.92;                         // leichte Verjüngung zur Kuppe
+  const gold = (MATERIALS[state.material] || {}).group === 'vergoldet';
+  const g1 = gold ? '#e8c878' : '#e8e8e6', g2 = gold ? '#a87c30' : '#8f8f8c', g3 = gold ? '#6e4d1a' : '#5c5c5a';
+  const bx = cx - r - h, bw = dia + 2 * h, rx = Math.min(h * 0.55, w * 0.4);
+  const dx = cx + r + h + 3;                   // Maßlinie Breite (rechts)
+  const hy = ringY - 2.2;                      // Maßlinie Höhe (über dem Band)
+  const dyB = H - pad * 0.25;                  // Maßlinie Finger-Ø (unten)
+  const tick = (x1, y1, x2, y2) => `<line class="f-dim" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
+  document.getElementById('fingerSvg').setAttribute('viewBox', `0 0 ${W} ${H}`);
+  document.getElementById('fingerSvg').innerHTML = `
+    <defs><linearGradient id="fBand" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="${g3}"/><stop offset="0.22" stop-color="${g2}"/>
+      <stop offset="0.5" stop-color="${g1}"/><stop offset="0.78" stop-color="${g2}"/>
+      <stop offset="1" stop-color="${g3}"/></linearGradient></defs>
+    <path class="f-silhouette" d="M ${cx - r} ${H} L ${cx - tw} ${yTip}
+      C ${cx - tw} ${yTip - r * 1.2}, ${cx + tw} ${yTip - r * 1.2}, ${cx + tw} ${yTip}
+      L ${cx + r} ${H} Z"/>
+    <path class="f-crease" d="M ${cx - r * 0.5} ${ringY + w + 9} Q ${cx} ${ringY + w + 10.2} ${cx + r * 0.5} ${ringY + w + 9}"/>
+    <path class="f-crease" d="M ${cx - r * 0.4} ${ringY + w + 11} Q ${cx} ${ringY + w + 12} ${cx + r * 0.4} ${ringY + w + 11}"/>
+    <rect x="${bx}" y="${ringY}" width="${bw}" height="${w}" rx="${rx}" fill="url(#fBand)"/>
+    <rect class="f-band-edge" x="${bx}" y="${ringY}" width="${bw}" height="${w}" rx="${rx}"/>
+    ${tick(dx, ringY, dx, ringY + w)}${tick(dx - 1.1, ringY, dx + 1.1, ringY)}${tick(dx - 1.1, ringY + w, dx + 1.1, ringY + w)}
+    <text x="${dx + 2.2}" y="${ringY + w / 2 - 1}">Breite</text>
+    <text class="f-em" x="${dx + 2.2}" y="${ringY + w / 2 + 2.4}">${fmt(w)} mm</text>
+    ${tick(bx, hy, bx + h, hy)}${tick(bx, hy - 1.1, bx, hy + 1.1)}${tick(bx + h, hy - 1.1, bx + h, hy + 1.1)}
+    <text x="${bx - 0.5}" y="${hy - 2}">Höhe ${fmt(h)} mm</text>
+    ${tick(cx - r, dyB, cx + r, dyB)}${tick(cx - r, dyB - 1.1, cx - r, dyB + 1.1)}${tick(cx + r, dyB - 1.1, cx + r, dyB + 1.1)}
+    <text x="${cx}" y="${dyB - 1.8}" text-anchor="middle">Finger-Ø ${fmt(dia)} mm — entspricht dem Innen-Ø</text>`;
+}
+
 function updateUI() {
   const p = PROFILES[state.profileKey], m = MATERIALS[state.material];
   const dia = diameterForEU(state.euSize);
@@ -2773,6 +2845,7 @@ function updateUI() {
   document.getElementById('annoWval').textContent = `${fmt(state.width)} mm`;
   document.getElementById('annoHval').textContent = `${fmt(state.height)} mm`;
   document.getElementById('annoDval').textContent = `${fmt(dia)} mm`;
+  renderFingerView();
   document.getElementById('sumProfile').textContent  = `${p.letter}. ${p.label}`;
   document.getElementById('sumDim').textContent      = `${fmt(state.width)} × ${fmt(state.height)} mm`;
   document.getElementById('sumSize').textContent     = `EU ${state.euSize}`;
@@ -2868,6 +2941,11 @@ function goToStep(n) {
 document.getElementById('vcReset').addEventListener('click', () => { camera.position.set(34, 22, 34); controls.target.set(0, 0, 0); controls.update(); });
 document.getElementById('vcWire').addEventListener('click', e => { wireframeMode = !wireframeMode; e.currentTarget.classList.toggle('active', wireframeMode); state.needsUpdate = true; });
 document.getElementById('vcAnno').addEventListener('click', e => { document.getElementById('viewer').classList.toggle('show-anno'); e.currentTarget.classList.toggle('active'); });
+document.getElementById('vcFinger').addEventListener('click', e => {
+  const on = document.getElementById('viewer').classList.toggle('show-finger');
+  e.currentTarget.classList.toggle('active', on);
+  if (on) renderFingerView();
+});
 
 // ══════════════════════════════════════════════════
 // MOBILE BOTTOM-SHEET — ziehbares Bedienfeld mit Snap-Punkten
