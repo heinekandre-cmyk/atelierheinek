@@ -2560,22 +2560,22 @@ const _spinTilt = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0
 const _spinY = new THREE.Vector3(0, 1, 0);
 const _spinQ = new THREE.Quaternion();
 
-// ── Fingeransicht: Gliederhand ─────────────────────────────────────────
-// Eine prozedural erzeugte Gliederhand (eigenes Werk, keine Fremdlizenz) —
-// Segmente und Kugelgelenke wie bei der hölzernen Zeichenhand im Atelier.
-// Sie wird erst beim ersten Umschalten nachgeladen (~890 KB roh, nach
-// Kompression ein Bruchteil); die Startlast der Seite bleibt unberührt.
-// Das Modell ist in Millimetern und bereits fertig ausgerichtet gebaut:
-// Ringfinger senkrecht durch den Ursprung, Ringsitz am Fingeransatz.
-// Skalierung: Innen-Ø der gewählten Größe = Finger-Ø am Ringsitz.
+// ── Fingeransicht: organische Hand ─────────────────────────────────────
+// Prozedural erzeugte menschliche Hand (eigenes Werk, keine Fremdlizenz):
+// als Distanzfeld aus verschmolzenen Kapseln modelliert (weiche Knöchel,
+// Schwimmhäute, Daumen-/Kleinfingerballen) und per Marching Cubes ver-
+// netzt. Wird erst beim ersten Umschalten nachgeladen; Startlast bleibt
+// unberührt. Modell in Millimetern, fertig ausgerichtet: Ringfinger senk-
+// recht durch den Ursprung, Ringsitz am Fingeransatz (per Raycast ver-
+// messen). Skalierung: Innen-Ø der gewählten Größe = Finger-Ø am Sitz.
 let fingerMode = false, fingerGroup = null, handLoading = false;
 const HAND_URL = '/vendor/models/hand.obj';
 const HAND_Q = new THREE.Quaternion(0, 0, 0, 1);   // Modell ist vor-ausgerichtet
 const HAND_T = new THREE.Vector3(0, 0, 0);
-const HAND_R = 8.2;           // Fingerradius am Ringsitz (Modell-mm)
-const HAND_MIN_Y = -123;      // Unterkante Handgelenk (Modell-mm)
+const HAND_R = 7.78;          // Fingerradius am Ringsitz (Modell-mm, raycast-vermessen)
+const HAND_MIN_Y = -138;      // Unterkante Handgelenk (Modell-mm)
 const HAND_MAT = new THREE.MeshStandardMaterial({
-  color: 0x4a4037, roughness: 0.88, metalness: 0.0, envMapIntensity: 0.35
+  color: 0xc9a78c, roughness: 0.62, metalness: 0.0, envMapIntensity: 0.45
 });
 const SHADOW_EXT = 24;        // Standard-Ausdehnung der Schattenkamera
 
@@ -2968,8 +2968,10 @@ document.getElementById('vcFinger').addEventListener('click', e => {
     const s = (diameterForEU(state.euSize) / 2) / HAND_R;
     camera.position.set(65 * s, 23 * s, 65 * s);
     controls.target.set(0, -11 * s, 0);
+    controls.maxDistance = 520;               // ganze Hand einsehbar
   } else {
     if (fingerGroup) fingerGroup.visible = false;
+    controls.maxDistance = 120;               // Standard-Zoomgrenze zurück
     camera.position.copy(_prevCam.pos); controls.target.copy(_prevCam.tgt);
   }
   applyFingerScale();
