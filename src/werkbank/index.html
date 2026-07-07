@@ -2571,9 +2571,9 @@ const _spinQ = new THREE.Quaternion();
 let fingerMode = false, fingerGroup = null, handLoading = false;
 const HAND_URL = '/vendor/models/hand.obj';
 const HAND_Q = new THREE.Quaternion(0, 0, 0, 1);   // Modell ist vor-ausgerichtet
-const HAND_T = new THREE.Vector3(0, 0, 0);
-const HAND_R = 7.78;          // Fingerradius am Ringsitz (Modell-mm, raycast-vermessen)
-const HAND_MIN_Y = -138;      // Unterkante Handgelenk (Modell-mm)
+const HAND_T = new THREE.Vector3(0, -6, 0);        // Sitz auf rundesten Querschnitt gelegt
+const HAND_R = 7.95;          // Fingerradius am Ringsitz (Modell-mm, raycast-vermessen)
+const HAND_MIN_Y = -150;      // Unterkante Handgelenk inkl. Versatz (Modell-mm)
 const HAND_MAT = new THREE.MeshStandardMaterial({
   color: 0xc9a78c, roughness: 0.62, metalness: 0.0, envMapIntensity: 0.45
 });
@@ -2966,9 +2966,9 @@ document.getElementById('vcFinger').addEventListener('click', e => {
     ensureHand().then(() => { if (fingerGroup) fingerGroup.visible = fingerMode; });
     if (fingerGroup) fingerGroup.visible = true;
     const s = (diameterForEU(state.euSize) / 2) / HAND_R;
-    camera.position.set(65 * s, 23 * s, 65 * s);
-    controls.target.set(0, -11 * s, 0);
-    controls.maxDistance = 520;               // ganze Hand einsehbar
+    camera.position.set(210 * s, 80 * s, 210 * s);  // ~30 cm Abstand: ganze Hand im Bild
+    controls.target.set(0, -52 * s, 0);             // Blick auf die Handmitte
+    controls.maxDistance = 900;
   } else {
     if (fingerGroup) fingerGroup.visible = false;
     controls.maxDistance = 120;               // Standard-Zoomgrenze zurück
