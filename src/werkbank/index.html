@@ -782,27 +782,6 @@
   .watermark-label { font-size: 9px; letter-spacing: 0.34em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 4px; font-family: 'Archivo', sans-serif; }
   .watermark-text { font-family: 'Playfair Display', serif; font-style: italic; font-size: 15px; color: var(--ink-muted); letter-spacing: 0.005em; line-height: 1.3; }
   .watermark-form { font-size: 8.5px; letter-spacing: 0.28em; text-transform: uppercase; color: var(--ink-faint); margin-top: 7px; font-family: 'Archivo', sans-serif; }
-  /* Fingeransicht (Umschalter im Viewer) */
-  .finger-view {
-    position: absolute; inset: 0; z-index: 2;
-    display: none; flex-direction: column; align-items: center; justify-content: center;
-  }
-  .viewer.show-finger .finger-view { display: flex; }
-  .viewer.show-finger #canvas, .viewer.show-finger .dim-anno { visibility: hidden; }
-  .finger-view svg { height: min(72%, 520px); max-width: 86%; }
-  .finger-view .f-silhouette { fill: #26221d; stroke: rgba(200, 184, 150, 0.28); stroke-width: 0.3; }
-  .finger-view .f-crease { fill: none; stroke: rgba(200, 184, 150, 0.16); stroke-width: 0.28; }
-  .finger-view .f-band-edge { fill: none; stroke: rgba(0, 0, 0, 0.35); stroke-width: 0.18; }
-  .finger-view .f-dim { stroke: var(--ink-faint); stroke-width: 0.22; }
-  .finger-view text {
-    font-family: 'Archivo', sans-serif; font-weight: 400; font-size: 2.7px;
-    letter-spacing: 0.32px; fill: var(--ink-muted); text-transform: uppercase;
-  }
-  .finger-view text.f-em { fill: var(--sand); }
-  .finger-note {
-    margin-top: 14px; font-size: 9.5px; letter-spacing: 0.22em;
-    text-transform: uppercase; color: var(--ink-faint);
-  }
   .viewer-controls { position: absolute; bottom: 28px; right: 32px; display: flex; gap: 5px; z-index: 3; }
   .vc-btn {
     width: 38px; height: 38px; background: var(--bg-panel); border: 1px solid var(--line);
@@ -1264,13 +1243,6 @@
       <button class="vc-btn" id="vcReset" title="Ansicht zurücksetzen" aria-label="Ansicht zurücksetzen">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
       </button>
-    </div>
-    <!-- Fingeransicht: maßstabsgetreue Silhouette. Der Innendurchmesser des
-         Rings IST der Fingerdurchmesser — die Proportionen stimmen exakt,
-         nur die absolute Bildschirmgröße nicht (Geräte-DPI unbekannt). -->
-    <div class="finger-view" id="fingerView">
-      <svg id="fingerSvg" role="img" aria-label="Ring am Finger, Proportionen maßstabsgetreu"></svg>
-      <div class="finger-note">Proportionen maßstabsgetreu · Darstellung nicht in Originalgröße</div>
     </div>
     <div class="dim-anno" id="annoW" style="top:30%;left:30%;">Breite · <em id="annoWval">5,00 mm</em></div>
     <div class="dim-anno" id="annoH" style="top:50%;left:72%;">Höhe · <em id="annoHval">1,80 mm</em></div>
@@ -2588,6 +2560,53 @@ const _spinTilt = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0
 const _spinY = new THREE.Vector3(0, 1, 0);
 const _spinQ = new THREE.Quaternion();
 
+// ── Fingeransicht (3D) ─────────────────────────────────────────────────
+// Ein stilisierter Finger als Rotationskörper um Y — er steht wie eine
+// Skulptur auf dem Graphitboden, der Ring sitzt waagrecht aufgeschoben.
+// Bewusst abstrakt in mattem, dunklem Ton (keine Hautimitation): Knöchel-
+// wulst, Fingerbeere und Nagel machen ihn lesbar, ohne kitschig zu werden.
+// Der Radius folgt dem Innen-Ø des Rings — die Proportionen stimmen exakt.
+let fingerMode = false, fingerGroup = null;
+const FINGER_MAT = new THREE.MeshStandardMaterial({
+  color: 0x4a4037, roughness: 0.88, metalness: 0.0, envMapIntensity: 0.35
+});
+const NAIL_MAT = new THREE.MeshStandardMaterial({
+  color: 0x6b6154, roughness: 0.5, metalness: 0.0, envMapIntensity: 0.5
+});
+
+function buildFingerMesh() {
+  if (fingerGroup) {
+    fingerGroup.children.forEach(c => c.geometry && c.geometry.dispose());
+    scene.remove(fingerGroup); fingerGroup = null;
+  }
+  const R = diameterForEU(state.euSize) / 2;
+  // Profil (y, Radiusfaktor): vom Bodenstumpf über Knöchel und Ringzone
+  // (knapp innerhalb der Bohrung) bis zur gerundeten Kuppe.
+  const prof = [
+    [-19.0, 0.001], [-18.6, 0.50], [-17.8, 0.82], [-16.4, 0.97],
+    [-13.5, 1.03], [-10.5, 1.055], [-8.0, 1.02], [-5.5, 0.995],
+    [-3.5, 0.985], [3.5, 0.985],                       // Ringzone
+    [6.0, 0.99], [9.0, 0.965],
+    [10.4, 0.93], [11.6, 0.95],                        // Gelenkfalte
+    [14.5, 0.925], [18.5, 0.875],
+    [21.5, 0.80], [24.0, 0.64], [25.6, 0.42], [26.6, 0.001]
+  ].map(([y, f]) => new THREE.Vector2(Math.max(0.001, f * R), y));
+  const finger = new THREE.Mesh(new THREE.LatheGeometry(prof, 56), FINGER_MAT);
+  finger.castShadow = true; finger.receiveShadow = true;
+
+  // Nagel: flachgedrückte Kugel, halb in die Kuppe versenkt
+  const nail = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 16), NAIL_MAT);
+  nail.scale.set(R * 0.17, R * 0.62, R * 0.42);
+  nail.position.set(R * 0.76, 21.0, 0);
+  nail.rotation.z = -0.14;                             // folgt der Verjüngung
+  nail.castShadow = true;
+
+  fingerGroup = new THREE.Group();
+  fingerGroup.add(finger, nail);
+  fingerGroup.visible = fingerMode;
+  scene.add(fingerGroup);
+}
+
 function buildRingMesh() {
   if (ringMesh) {
     if (ringMesh.isGroup) {
@@ -2694,6 +2713,7 @@ function buildRingMesh() {
   ringMesh = new THREE.Group();
   ringMesh.add(meshOuter, meshInner);
   scene.add(ringMesh);
+  buildFingerMesh(); // Finger folgt der Ringgröße (Innen-Ø = Finger-Ø)
 }
 
 // ════════════════════════════════════════════════════
@@ -2794,46 +2814,6 @@ function selectProportion(step) {
   state.needsUpdate = true;
 }
 
-// ── Fingeransicht ──────────────────────────────────────────────────────
-// Seitenansicht im Maßstab: viewBox rechnet direkt in Millimetern.
-// Finger-Ø = Innen-Ø des Rings, Bandbreite = Ringbreite, Überstand = Ringhöhe.
-function renderFingerView() {
-  const dia = diameterForEU(state.euSize), w = state.width, h = state.height;
-  const r = dia / 2, pad = 10, fingerLen = 58;
-  const cx = r + h + pad + 2;                  // Fingerachse
-  const W = dia + 2 * h + pad * 2 + 26;        // rechts Platz für Maßlinien
-  const H = fingerLen + pad * 2;
-  const yTip = pad + r;                        // Kuppenzentrum
-  const ringY = yTip + r * 0.9 + 7;            // Bandoberkante unterhalb der Kuppe
-  const tw = r * 0.92;                         // leichte Verjüngung zur Kuppe
-  const gold = (MATERIALS[state.material] || {}).group === 'vergoldet';
-  const g1 = gold ? '#e8c878' : '#e8e8e6', g2 = gold ? '#a87c30' : '#8f8f8c', g3 = gold ? '#6e4d1a' : '#5c5c5a';
-  const bx = cx - r - h, bw = dia + 2 * h, rx = Math.min(h * 0.55, w * 0.4);
-  const dx = cx + r + h + 3;                   // Maßlinie Breite (rechts)
-  const hy = ringY - 2.2;                      // Maßlinie Höhe (über dem Band)
-  const dyB = H - pad * 0.25;                  // Maßlinie Finger-Ø (unten)
-  const tick = (x1, y1, x2, y2) => `<line class="f-dim" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
-  document.getElementById('fingerSvg').setAttribute('viewBox', `0 0 ${W} ${H}`);
-  document.getElementById('fingerSvg').innerHTML = `
-    <defs><linearGradient id="fBand" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="${g3}"/><stop offset="0.22" stop-color="${g2}"/>
-      <stop offset="0.5" stop-color="${g1}"/><stop offset="0.78" stop-color="${g2}"/>
-      <stop offset="1" stop-color="${g3}"/></linearGradient></defs>
-    <path class="f-silhouette" d="M ${cx - r} ${H} L ${cx - tw} ${yTip}
-      C ${cx - tw} ${yTip - r * 1.2}, ${cx + tw} ${yTip - r * 1.2}, ${cx + tw} ${yTip}
-      L ${cx + r} ${H} Z"/>
-    <path class="f-crease" d="M ${cx - r * 0.5} ${ringY + w + 9} Q ${cx} ${ringY + w + 10.2} ${cx + r * 0.5} ${ringY + w + 9}"/>
-    <path class="f-crease" d="M ${cx - r * 0.4} ${ringY + w + 11} Q ${cx} ${ringY + w + 12} ${cx + r * 0.4} ${ringY + w + 11}"/>
-    <rect x="${bx}" y="${ringY}" width="${bw}" height="${w}" rx="${rx}" fill="url(#fBand)"/>
-    <rect class="f-band-edge" x="${bx}" y="${ringY}" width="${bw}" height="${w}" rx="${rx}"/>
-    ${tick(dx, ringY, dx, ringY + w)}${tick(dx - 1.1, ringY, dx + 1.1, ringY)}${tick(dx - 1.1, ringY + w, dx + 1.1, ringY + w)}
-    <text x="${dx + 2.2}" y="${ringY + w / 2 - 1}">Breite</text>
-    <text class="f-em" x="${dx + 2.2}" y="${ringY + w / 2 + 2.4}">${fmt(w)} mm</text>
-    ${tick(bx, hy, bx + h, hy)}${tick(bx, hy - 1.1, bx, hy + 1.1)}${tick(bx + h, hy - 1.1, bx + h, hy + 1.1)}
-    <text x="${bx - 0.5}" y="${hy - 2}">Höhe ${fmt(h)} mm</text>
-    ${tick(cx - r, dyB, cx + r, dyB)}${tick(cx - r, dyB - 1.1, cx - r, dyB + 1.1)}${tick(cx + r, dyB - 1.1, cx + r, dyB + 1.1)}
-    <text x="${cx}" y="${dyB - 1.8}" text-anchor="middle">Finger-Ø ${fmt(dia)} mm — entspricht dem Innen-Ø</text>`;
-}
 
 function updateUI() {
   const p = PROFILES[state.profileKey], m = MATERIALS[state.material];
@@ -2845,7 +2825,6 @@ function updateUI() {
   document.getElementById('annoWval').textContent = `${fmt(state.width)} mm`;
   document.getElementById('annoHval').textContent = `${fmt(state.height)} mm`;
   document.getElementById('annoDval').textContent = `${fmt(dia)} mm`;
-  renderFingerView();
   document.getElementById('sumProfile').textContent  = `${p.letter}. ${p.label}`;
   document.getElementById('sumDim').textContent      = `${fmt(state.width)} × ${fmt(state.height)} mm`;
   document.getElementById('sumSize').textContent     = `EU ${state.euSize}`;
@@ -2941,10 +2920,20 @@ function goToStep(n) {
 document.getElementById('vcReset').addEventListener('click', () => { camera.position.set(34, 22, 34); controls.target.set(0, 0, 0); controls.update(); });
 document.getElementById('vcWire').addEventListener('click', e => { wireframeMode = !wireframeMode; e.currentTarget.classList.toggle('active', wireframeMode); state.needsUpdate = true; });
 document.getElementById('vcAnno').addEventListener('click', e => { document.getElementById('viewer').classList.toggle('show-anno'); e.currentTarget.classList.toggle('active'); });
+// Fingeransicht: Umschalten samt Kamerafahrt-Zielen; die vorherige Ansicht
+// wird gemerkt und beim Zurückschalten wiederhergestellt.
+const _prevCam = { pos: new THREE.Vector3(), tgt: new THREE.Vector3() };
 document.getElementById('vcFinger').addEventListener('click', e => {
-  const on = document.getElementById('viewer').classList.toggle('show-finger');
-  e.currentTarget.classList.toggle('active', on);
-  if (on) renderFingerView();
+  fingerMode = !fingerMode;
+  e.currentTarget.classList.toggle('active', fingerMode);
+  if (fingerGroup) fingerGroup.visible = fingerMode;
+  if (fingerMode) {
+    _prevCam.pos.copy(camera.position); _prevCam.tgt.copy(controls.target);
+    camera.position.set(42, 26, 42); controls.target.set(0, 4, 0);
+  } else {
+    camera.position.copy(_prevCam.pos); controls.target.copy(_prevCam.tgt);
+  }
+  controls.update();
 });
 
 // ══════════════════════════════════════════════════
@@ -3904,7 +3893,9 @@ function animate() {
       setRingGlow(ringMesh, 0.9 * Math.pow(1 - ringProg, 1.7));
     }
     _spinQ.setFromAxisAngle(_spinY, ringSpin);
-    ringMesh.quaternion.copy(_spinQ).multiply(_spinTilt); // gekippter Drehteller
+    ringMesh.quaternion.copy(_spinQ);
+    if (!fingerMode) ringMesh.quaternion.multiply(_spinTilt); // gekippter Drehteller
+    if (fingerGroup) fingerGroup.quaternion.copy(_spinQ);     // Finger dreht synchron mit
   }
   updatePour(dt); // Abguss-Glut (nach der Transition → sie hat das letzte Wort)
   controls.update();
