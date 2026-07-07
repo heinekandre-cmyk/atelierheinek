@@ -1,0 +1,14 @@
+{
+  "name": "atelierheinek",
+  "private": true,
+  "version": "2.0.0",
+  "description": "Atelier Heinek — Eintrittsseite und Ringkonfigurator (Werkbank)",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "devDependencies": {
+    "csso": "^5.0.5",
+    "terser": "^5.31.0"
+  }
+}
