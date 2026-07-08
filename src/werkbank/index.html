@@ -2596,7 +2596,12 @@ let fingerMode = false, fingerGroup = null, handLoading = false;
 const HAND_URL = '/vendor/models/hand.obj';
 const HAND_Q = new THREE.Quaternion(0, 0, 0, 1);   // Modell ist vor-ausgerichtet
 const HAND_T = new THREE.Vector3(0, 0, 0);         // Ausrichtung ist im Modell eingebacken
-const HAND_R = 7.67;          // gemessener Sitzradius (Bandmaximum ±1,2 mm) + 1 % Luft
+const HAND_R = 6.95;          // KALIBRIERT aus dem Mesh: Sektorradien am Sitz 6,82–7,58 mm.
+                              // Bewusst unter dem Mittel angesetzt, damit die breiten Haut-
+                              // partien leicht in die Bohrung drücken (bis ~9 %) und die
+                              // schmalen fast anliegen (~2 % Rest) — der Ring sitzt satt,
+                              // ohne dass der Finger durch die Außenfläche stößt.
+                              // Höherer Wert = lockerer, niedrigerer = strammer.
 const HAND_MIN_Y = -110.5;    // Unterkante des ausgerichteten Modells (Modell-mm)
 const HAND_MAT = new THREE.MeshStandardMaterial({
   color: 0xc9a78c, roughness: 0.62, metalness: 0.0, envMapIntensity: 0.45
@@ -2976,7 +2981,17 @@ function goToStep(n) {
 // Maße werden nun ausschließlich über die drei Proportions-Stufen gesetzt
 // (selectProportion). Die früheren Slider- und "Übernehmen"-Handler entfallen.
 
-document.getElementById('vcReset').addEventListener('click', () => { camera.position.set(34, 22, 34); controls.target.set(0, 0, 0); controls.update(); });
+document.getElementById('vcReset').addEventListener('click', () => {
+  // Target ist immer der Ringmittelpunkt; nur die Distanz hängt vom Modus ab.
+  if (fingerMode) {
+    const s = (diameterForEU(state.euSize) / 2) / HAND_R;
+    camera.position.set(52 * s, 20 * s, 52 * s);
+  } else {
+    camera.position.set(34, 22, 34);
+  }
+  controls.target.set(0, 0, 0);
+  controls.update();
+});
 document.getElementById('vcWire').addEventListener('click', e => { wireframeMode = !wireframeMode; e.currentTarget.classList.toggle('active', wireframeMode); state.needsUpdate = true; });
 document.getElementById('vcAnno').addEventListener('click', e => { document.getElementById('viewer').classList.toggle('show-anno'); e.currentTarget.classList.toggle('active'); });
 // Fingeransicht: Umschalten samt Nachladen des Handmodells und Kamerafahrt;
@@ -2990,9 +3005,9 @@ document.getElementById('vcFinger').addEventListener('click', e => {
     ensureHand().then(() => { if (fingerGroup) fingerGroup.visible = fingerMode; });
     if (fingerGroup) fingerGroup.visible = true;
     const s = (diameterForEU(state.euSize) / 2) / HAND_R;
-    camera.position.set(210 * s, 80 * s, 210 * s);  // ~30 cm Abstand: ganze Hand im Bild
-    controls.target.set(0, -34 * s, 0);             // Blick auf die Handmitte
-    controls.maxDistance = 900;
+    camera.position.set(52 * s, 20 * s, 52 * s);    // Nahaufnahme: der Ring füllt das Bild, die Hand
+    controls.target.set(0, 0, 0);                   // gibt Kontext — Dreh-/Zoomzentrum = Ringmittelpunkt.
+    controls.maxDistance = 900;                     // Herauszoomen bis zur ganzen Hand bleibt möglich.
   } else {
     if (fingerGroup) fingerGroup.visible = false;
     controls.maxDistance = 120;               // Standard-Zoomgrenze zurück
