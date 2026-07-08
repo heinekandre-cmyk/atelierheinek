@@ -2583,9 +2583,10 @@ const _spinY = new THREE.Vector3(0, 1, 0);
 const _spinQ = new THREE.Quaternion();
 
 // ── Fingeransicht: Präsentierhand ──────────────────────────────────────
-// Vom Betreiber bereitgestelltes Handmodell (hand.stl), wasserdicht
-// remeshed, dezimiert und vor-ausgerichtet exportiert: Ringfinger senk-
-// recht durch den Ursprung, Ringsitz (laut Vorgabe EU 47) am Ursprung.
+// Vom Betreiber bereitgestelltes Handmodell (hand_web_kompatibel.glb),
+// Hauptkomponente extrahiert, dezimiert (40k Flächen) und vor-ausgerichtet
+// exportiert: Ringfinger senkrecht durch den Ursprung, Ringsitz am
+// Ursprung, Handrücken zur Eröffnungskamera. Sichtprüfung: 8. Juli 2026.
 // Wird erst beim ersten Umschalten nachgeladen; Startlast bleibt unbe-
 // rührt. Skalierung: Innen-Ø der gewählten Größe = Finger-Ø am Sitz.
 // KALIBRIERUNG: Sollte der Sitz nach Sichtprüfung nicht exakt stimmen,
@@ -2595,8 +2596,8 @@ let fingerMode = false, fingerGroup = null, handLoading = false;
 const HAND_URL = '/vendor/models/hand.obj';
 const HAND_Q = new THREE.Quaternion(0, 0, 0, 1);   // Modell ist vor-ausgerichtet
 const HAND_T = new THREE.Vector3(0, 0, 0);         // Ausrichtung ist im Modell eingebacken
-const HAND_R = 7.48;          // Ringsitz = EU 47 laut Modellvorgabe (47 mm Umfang / 2π)
-const HAND_MIN_Y = -102;      // Unterkante des ausgerichteten Modells (Modell-mm)
+const HAND_R = 7.67;          // gemessener Sitzradius (Bandmaximum ±1,2 mm) + 1 % Luft
+const HAND_MIN_Y = -110.5;    // Unterkante des ausgerichteten Modells (Modell-mm)
 const HAND_MAT = new THREE.MeshStandardMaterial({
   color: 0xc9a78c, roughness: 0.62, metalness: 0.0, envMapIntensity: 0.45
 });
