@@ -60,29 +60,36 @@
   /* ── Schwarzer Sand · Eintrittsseite ──────────────────────────────────
      Erbt die Welt des Konfigurators: Graphitnacht, Bernstein als ruhiger
      Faden, Glut (--ember) NUR für den Gusskanal und den Eintritt in die
-     Werkbank — dieselbe Glut-Regel wie drüben. */
+     Werkbank — dieselbe Glut-Regel wie drüben.
+
+     Orchestrierter Moment: der Gluttropfen läuft den Kanal hinab und
+     „kommt an" — im selben Takt pulst der Werkbank-Knopf einmal auf
+     (::after-Schicht, damit Hover-Zustände unberührt bleiben).
+     Taktrechnung: Tropfen startet bei 2.6s, Zyklus 4.5s, erreicht den
+     Kanalfuß bei 55 % → erste Ankunft ≈ 5.05s, danach alle 4.5s. */
   :root {
     --bg: #131211;
     --ink: #edebe4;
     --ink-soft: #d8d4c9;
-    --ink-muted: #a09b8e;
-    --ink-faint: #6f6b60;
+    --ink-muted: #a8a396;
+    --ink-faint: #7d786c;
     --line: #3c3933;
     --sand: #c8b896;
     --sand-deep: #a89272;
     --accent: #c98f3e;
     --ember: #e0772b;
-    --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition: 0.2s cubic-bezier(0.23, 1, 0.32, 1);
   }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; }
   body {
     background: var(--bg); color: var(--ink);
-    font-family: 'Archivo', sans-serif;
+    font-family: 'Source Serif 4', serif;
     display: flex; flex-direction: column;
     min-height: 100dvh;
     position: relative;
   }
+  ::selection { background: rgba(201, 143, 62, 0.3); color: var(--ink); }
   /* Das Korn: dieselbe stille Sandtextur wie im alten Intro */
   body::before {
     content: ''; position: fixed; inset: 0; pointer-events: none;
@@ -117,7 +124,7 @@
   }
   .tagline {
     font-family: 'Playfair Display', serif; font-style: italic;
-    font-size: clamp(18px, 3.4vw, 22px); color: #d4c5a3;
+    font-size: clamp(19px, 3.6vw, 23px); color: #d4c5a3;
     letter-spacing: 0.03em; margin-top: 30px;
     opacity: 0; animation: fade 1.2s ease 1.2s forwards;
   }
@@ -128,7 +135,7 @@
   .claim {
     font-family: 'Playfair Display', serif; font-style: italic;
     font-size: 14px; color: var(--ink-faint); letter-spacing: 0.04em;
-    margin-top: 14px;
+    margin-top: 14px; max-width: 46ch; text-wrap: balance;
     opacity: 0; animation: fade 1.4s ease 1.7s forwards;
   }
 
@@ -156,12 +163,24 @@
   }
 
   .enter {
-    display: inline-block; text-decoration: none;
-    font-family: 'Archivo', sans-serif; font-size: 11px; font-weight: 400;
-    letter-spacing: 0.3em; text-transform: uppercase;
+    position: relative; display: inline-block; text-decoration: none;
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 500;
+    letter-spacing: 0.16em; text-transform: uppercase;
     color: var(--sand); border: 1px solid rgba(224, 119, 43, 0.45);
     padding: 15px 30px; transition: all var(--transition);
     opacity: 0; animation: fade 1s ease 2.6s forwards;
+  }
+  /* Die Ankunft: Glutschicht über dem Rand, hebt sich im Takt des Tropfens */
+  .enter::after {
+    content: ''; position: absolute; inset: -1px; pointer-events: none;
+    border: 1px solid var(--ember);
+    box-shadow: 0 0 24px rgba(224, 119, 43, 0.25), inset 0 0 12px rgba(224, 119, 43, 0.08);
+    opacity: 0;
+    animation: arrive 4.5s ease 5.05s infinite;
+  }
+  @keyframes arrive {
+    0%, 14%, 100% { opacity: 0; }
+    3%            { opacity: 1; }
   }
   .enter:hover, .enter:focus-visible {
     color: var(--ink); border-color: var(--ember);
@@ -171,21 +190,25 @@
   .enter span { color: var(--ember); margin-right: 12px; }
 
   .facts {
-    margin-top: 44px; font-size: 10.5px; letter-spacing: 0.22em;
-    text-transform: uppercase; color: var(--ink-faint); line-height: 2;
+    font-family: 'JetBrains Mono', monospace;
+    margin-top: 44px; font-size: 10px; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--ink-faint); line-height: 2.1;
     opacity: 0; animation: fade 1.2s ease 3s forwards;
   }
-  .facts b { font-weight: 400; color: var(--ink-muted); }
+  .facts b { font-weight: 500; color: var(--sand); }
+  .facts .sep { color: var(--line); margin: 0 6px; }
 
   footer {
     display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px 22px;
     padding: 22px 24px calc(22px + env(safe-area-inset-bottom));
-    font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase;
     color: var(--ink-faint);
     opacity: 0; animation: fade 1.2s ease 3.2s forwards;
   }
   footer a { color: var(--ink-faint); text-decoration: none; transition: color var(--transition); }
   footer a:hover, footer a:focus-visible { color: var(--sand); }
+  footer a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
   footer .sep { width: 3px; height: 3px; border-radius: 50%; background: var(--line); }
 
   @keyframes rise { to { opacity: 1; transform: translateY(0); } }
@@ -196,6 +219,7 @@
       animation: none; opacity: 1; transform: none;
     }
     .channel::after { animation: none; opacity: 0; }
+    .enter::after { animation: none; opacity: 0; }
   }
 </style>
 </head>
@@ -212,8 +236,8 @@
   <a class="enter" href="/werkbank/"><span>&darr;</span>Zur Werkbank — entwirf deinen Ring</a>
 
   <p class="facts">
-    <b>925 Silber</b> · Delft-Sandguss · Dornbirn, Vorarlberg<br />
-    Werkstatt im Aufbau · Unverbindliche Anfragen willkommen
+    <b>925 Silber</b><span class="sep">·</span>Delft-Sandguss<span class="sep">·</span>Dornbirn, Vorarlberg<br />
+    Werkstatt im Aufbau<span class="sep">·</span>Unverbindliche Anfragen willkommen
   </p>
 </main>
 

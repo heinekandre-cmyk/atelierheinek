@@ -5,59 +5,132 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="robots" content="noindex, follow" />
 <title>AGB — Atelier Heinek</title>
-<meta name="theme-color" content="#141008" />
+<meta name="theme-color" content="#131211" />
 <link href="/vendor/fonts/fonts.css" rel="stylesheet" />
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20fill='%23131211'/%3E%3Ctext%20x='32'%20y='43'%20font-family='Georgia,serif'%20font-style='italic'%20font-size='30'%20fill='%23ece2cc'%20text-anchor='middle'%3EAH%3C/text%3E%3C/svg%3E" />
 <style>
+  /* ── Werkstattpapier · gemeinsames Layout der Unterseiten ─────────────
+     Graphit & Glut — ohne Glut: Bernstein ist hier der ruhige Faden.
+     Der Gusskanal kehrt als Rückgrat wieder; die Klauseln hängen als
+     nummerierte Abstiche daran. Ton hier förmlich, wo rechtlich geboten. */
   :root {
-    --bg: #131211; --ink: #edebe4; --ink-muted: #b9b4a8; --ink-faint: #7d786c;
-    --accent: #c98f3e; --line: rgba(237, 235, 228, 0.14);
+    --bg: #131211; --ink: #edebe4; --ink-soft: #d8d4c9;
+    --ink-muted: #aca698; --ink-faint: #7d786c;
+    --line: #37342e; --sand: #c8b896; --sand-deep: #a89272;
+    --accent: #c98f3e;
+    --spine: clamp(18px, 4.5vw, 30px);
+    --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     background: var(--bg); color: var(--ink-muted);
     font-family: 'Archivo', sans-serif; font-weight: 300;
-    font-size: 15px; line-height: 1.75;
+    font-size: 15.5px; line-height: 1.75;
     -webkit-font-smoothing: antialiased;
   }
-  .wrap { max-width: 620px; margin: 0 auto; padding: 56px 24px 72px; }
-  .back {
-    display: inline-block; margin-bottom: 40px;
-    font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase;
-    color: var(--ink-faint); text-decoration: none; transition: color 0.25s;
+  ::selection { background: rgba(201, 143, 62, 0.3); color: var(--ink); }
+  body::before {
+    content: ''; position: fixed; inset: 0; pointer-events: none;
+    background-image:
+      radial-gradient(circle at 30% 20%, rgba(200, 184, 150, 0.05) 0%, transparent 55%),
+      radial-gradient(circle at 1px 1px, rgba(200, 184, 150, 0.1) 1px, transparent 0);
+    background-size: auto, 4px 4px;
+    opacity: 0.7;
   }
-  .back:hover { color: var(--accent); }
-  .mono { font-family: 'Singlong', cursive; font-style: normal; font-size: 30px; color: var(--ink); line-height: 1; }
-  .brand { font-family: 'Playfair Display', serif; font-size: 11px; letter-spacing: 0.32em; text-transform: uppercase; color: var(--ink-faint); margin-top: 8px; }
-  h1 { font-family: 'Playfair Display', serif; font-weight: 400; font-size: 30px; color: var(--ink); margin: 40px 0 8px; }
-  h1 em { font-style: italic; color: var(--accent); }
+  .wrap { max-width: 680px; margin: 0 auto; padding: 38px 24px 64px; position: relative; }
+
+  .masthead { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; }
+  .masthead a {
+    font-size: 10px; letter-spacing: 0.24em; text-transform: uppercase;
+    color: var(--ink-faint); text-decoration: none; transition: color var(--transition);
+  }
+  .masthead a:hover { color: var(--sand); }
+  a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .ident { margin-top: 34px; display: flex; align-items: baseline; gap: 14px; }
+  .mono { font-family: 'Singlong', cursive; font-size: 34px; color: #e8dec8; line-height: 1; }
+  .brand {
+    font-family: 'Playfair Display', serif; font-size: 11px;
+    letter-spacing: 0.34em; text-transform: uppercase; color: var(--ink-faint);
+  }
+  .rule { height: 1px; background: var(--line); margin-top: 20px; }
+
+  .eyebrow {
+    margin-top: 34px; font-size: 10px; font-weight: 400;
+    letter-spacing: 0.3em; text-transform: uppercase; color: var(--sand-deep);
+  }
+  h1 {
+    font-family: 'Playfair Display', serif; font-weight: 500;
+    font-size: clamp(28px, 5.4vw, 34px); line-height: 1.15;
+    color: var(--ink); margin-top: 10px; text-wrap: balance;
+  }
+  h1 em { font-style: italic; font-weight: 400; color: var(--accent); }
+
+  /* Der Aushang: Status der Werkstatt, deutlich, aber ohne Alarmfarbe */
+  .notice {
+    margin-top: 30px; padding: 18px 20px;
+    border: 1px solid rgba(201, 143, 62, 0.4);
+    background: rgba(201, 143, 62, 0.05);
+    font-size: 13.5px; line-height: 1.7;
+  }
+  .notice strong { color: var(--accent); font-weight: 500; }
+
+  .doc { margin-top: 42px; border-left: 1px solid var(--line); padding-left: var(--spine); position: relative; }
+  .doc::before, .doc::after {
+    content: ''; position: absolute; left: -3px; width: 5px; height: 5px;
+    border-radius: 50%; background: var(--accent);
+  }
+  .doc::before { top: 0; }
+  .doc::after { bottom: 0; }
   h2 {
+    position: relative;
     font-family: 'Archivo', sans-serif; font-weight: 500; font-size: 11px;
-    letter-spacing: 0.22em; text-transform: uppercase; color: var(--ink-faint);
-    margin: 38px 0 10px; padding-top: 22px; border-top: 1px solid var(--line);
+    letter-spacing: 0.24em; text-transform: uppercase; color: var(--ink-soft);
+    margin: 40px 0 10px;
+  }
+  .doc h2:first-child { margin-top: 4px; }
+  h2::before {
+    content: ''; position: absolute; top: 0.7em;
+    left: calc(var(--spine) * -1); width: 11px; height: 1px;
+    background: var(--accent);
+  }
+  /* Klauselziffer: Playfair kursiv, Bernstein — die Ordnung ist hier echt */
+  h2 .n {
+    font-family: 'Playfair Display', serif; font-style: italic; font-weight: 400;
+    font-size: 16px; letter-spacing: 0; color: var(--accent);
+    margin-right: 12px;
   }
   p { margin-bottom: 12px; }
   strong { font-weight: 500; color: var(--ink); }
   a { color: var(--accent); text-decoration: none; }
   a:hover { text-decoration: underline; }
-  .status {
-    margin-top: 28px; padding: 16px 18px; border: 1px solid rgba(201, 143, 62, 0.4);
-    font-size: 13.5px; color: var(--ink-muted);
+
+  .paper-foot {
+    margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--line);
+    display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 20px;
+    font-size: 11.5px; color: var(--ink-faint);
   }
-  .status strong { color: var(--accent); }
-  .stand { margin-top: 44px; font-size: 11.5px; color: var(--ink-faint); }
-  .foot { margin-top: 10px; font-size: 11.5px; color: var(--ink-faint); }
+  .paper-foot nav { display: flex; flex-wrap: wrap; gap: 6px 16px; }
+  .paper-foot a { color: var(--ink-faint); transition: color var(--transition); }
+  .paper-foot a:hover { color: var(--sand); text-decoration: none; }
+  .stand { max-width: 46ch; }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <a class="back" href="/">&larr; Zur Startseite</a> <a class="back" href="/werkbank/">Zur Werkbank &rarr;</a>
-  <div class="mono">AH</div>
-  <div class="brand">Atelier Heinek</div>
+  <div class="masthead">
+    <a href="/">&larr; Startseite</a>
+    <a href="/werkbank/">Werkbank &rarr;</a>
+  </div>
+  <div class="ident">
+    <div class="mono" aria-hidden="true">AH</div>
+    <div class="brand">Atelier Heinek</div>
+  </div>
+  <div class="rule" aria-hidden="true"></div>
 
+  <p class="eyebrow">Werkstattpapier</p>
   <h1>Allgemeine <em>Geschäftsbedingungen</em></h1>
 
-  <div class="status">
+  <div class="notice">
     <strong>Aktueller Stand der Werkstatt:</strong> Die Gewerbeanmeldung ist in
     Vorbereitung. Bis zu deren Abschluss werden <strong>keine Bestellungen
     angenommen und keine Angebote gelegt</strong>. Über den Konfigurator kannst
@@ -66,88 +139,96 @@
     geschlossen werden.
   </div>
 
-  <h2>1. Geltungsbereich</h2>
-  <p>Diese Bedingungen gelten für alle Verträge über die Anfertigung und
-  Lieferung von Schmuckstücken zwischen <strong>Andre Heinek, Atelier Heinek,
-  6850 Dornbirn</strong> (nachfolgend „die Werkstatt") und Kundinnen und Kunden.
-  Zwingende gesetzliche Verbraucherschutzbestimmungen bleiben in jedem Fall
-  unberührt.</p>
+  <div class="doc">
+    <h2><span class="n">1</span>Geltungsbereich</h2>
+    <p>Diese Bedingungen gelten für alle Verträge über die Anfertigung und
+    Lieferung von Schmuckstücken zwischen <strong>Andre Heinek, Atelier Heinek,
+    6850 Dornbirn</strong> (nachfolgend „die Werkstatt") und Kundinnen und Kunden.
+    Zwingende gesetzliche Verbraucherschutzbestimmungen bleiben in jedem Fall
+    unberührt.</p>
 
-  <h2>2. Kein Angebot auf der Website</h2>
-  <p>Alle Darstellungen, Konfigurationen und Preisangaben auf dieser Website —
-  einschließlich des Richtpreises im Konfigurator — sind <strong>unverbindlich
-  und stellen kein Angebot im rechtlichen Sinn dar</strong>. Sie sind eine
-  Einladung, Interesse zu bekunden.</p>
+    <h2><span class="n">2</span>Kein Angebot auf der Website</h2>
+    <p>Alle Darstellungen, Konfigurationen und Preisangaben auf dieser Website —
+    einschließlich des Richtpreises im Konfigurator — sind <strong>unverbindlich
+    und stellen kein Angebot im rechtlichen Sinn dar</strong>. Sie sind eine
+    Einladung, Interesse zu bekunden.</p>
 
-  <h2>3. Zustandekommen eines Vertrags</h2>
-  <p>Der Weg zu einem Vertrag hat drei Schritte: Du übermittelst deine
-  Konfiguration als unverbindliche Interessensbekundung. Die Werkstatt prüft
-  Machbarkeit und Aufwand und legt dir ein <strong>individuelles, schriftliches
-  Angebot</strong> mit verbindlichem Preis und Fertigungszeit. Erst mit deiner
-  Annahme dieses Angebots kommt ein Vertrag zustande — vorher nicht.</p>
+    <h2><span class="n">3</span>Zustandekommen eines Vertrags</h2>
+    <p>Der Weg zu einem Vertrag hat drei Schritte: Du übermittelst deine
+    Konfiguration als unverbindliche Interessensbekundung. Die Werkstatt prüft
+    Machbarkeit und Aufwand und legt dir ein <strong>individuelles, schriftliches
+    Angebot</strong> mit verbindlichem Preis und Fertigungszeit. Erst mit deiner
+    Annahme dieses Angebots kommt ein Vertrag zustande — vorher nicht.</p>
 
-  <h2>4. Preise und Zahlung</h2>
-  <p>Es gilt der im individuellen Angebot genannte Preis in Euro. Der Richtpreis
-  aus dem Konfigurator ist eine Orientierung und kann vom Angebot abweichen,
-  etwa bei besonderen Maßen oder Oberflächen. Zahlungsart und Fälligkeit werden
-  im Angebot festgelegt.</p>
+    <h2><span class="n">4</span>Preise und Zahlung</h2>
+    <p>Es gilt der im individuellen Angebot genannte Preis in Euro. Der Richtpreis
+    aus dem Konfigurator ist eine Orientierung und kann vom Angebot abweichen,
+    etwa bei besonderen Maßen oder Oberflächen. Zahlungsart und Fälligkeit werden
+    im Angebot festgelegt.</p>
 
-  <h2>5. Einzelanfertigung — kein Rücktritt, kein Umtausch</h2>
-  <p>Jeder Ring wird <strong>nach deinen Angaben als Einzelanfertigung
-  gegossen</strong>; die Sandform wird für genau einen Guss gebaut und danach
-  zerstört. Das Rücktrittsrecht für Fernabsatzverträge ist daher gemäß
-  <strong>§ 18 Abs. 1 Z 3 FAGG</strong> ausgeschlossen (Waren, die nach
-  Kundenspezifikation angefertigt oder eindeutig auf persönliche Bedürfnisse
-  zugeschnitten sind). Auch ein Umtausch oder eine Erstattung aus Kulanz ist
-  bei Einzelanfertigungen ausgeschlossen.</p>
-  <p><strong>Wichtig und unberührt davon:</strong> Die gesetzliche
-  Gewährleistung für Mängel (Punkt 8) gilt uneingeschränkt. Ausgeschlossen ist
-  nur die Rückgabe einwandfreier Ware — nicht dein Recht bei einem Fehler.</p>
+    <h2><span class="n">5</span>Einzelanfertigung — kein Rücktritt, kein Umtausch</h2>
+    <p>Jeder Ring wird <strong>nach deinen Angaben als Einzelanfertigung
+    gegossen</strong>; die Sandform wird für genau einen Guss gebaut und danach
+    zerstört. Das Rücktrittsrecht für Fernabsatzverträge ist daher gemäß
+    <strong>§ 18 Abs. 1 Z 3 FAGG</strong> ausgeschlossen (Waren, die nach
+    Kundenspezifikation angefertigt oder eindeutig auf persönliche Bedürfnisse
+    zugeschnitten sind). Auch ein Umtausch oder eine Erstattung aus Kulanz ist
+    bei Einzelanfertigungen ausgeschlossen.</p>
+    <p><strong>Wichtig und unberührt davon:</strong> Die gesetzliche
+    Gewährleistung für Mängel (Punkt 8) gilt uneingeschränkt. Ausgeschlossen ist
+    nur die Rückgabe einwandfreier Ware — nicht dein Recht bei einem Fehler.</p>
 
-  <h2>6. Handwerkliche Eigenheiten und Toleranzen</h2>
-  <p>Sandguss ist ein handwerkliches Verfahren. Kleine Abweichungen in Maßen
-  (im Bereich von Zehntelmillimetern), Oberflächenstruktur und Zeichnung sind
-  verfahrensbedingt, machen jedes Stück einzigartig und sind
-  <strong>kein Mangel</strong>. 925 Silber kann mit der Zeit natürlich anlaufen;
-  auch das ist eine Materialeigenschaft, kein Fehler.</p>
+    <h2><span class="n">6</span>Handwerkliche Eigenheiten und Toleranzen</h2>
+    <p>Sandguss ist ein handwerkliches Verfahren. Kleine Abweichungen in Maßen
+    (im Bereich von Zehntelmillimetern), Oberflächenstruktur und Zeichnung sind
+    verfahrensbedingt, machen jedes Stück einzigartig und sind
+    <strong>kein Mangel</strong>. 925 Silber kann mit der Zeit natürlich anlaufen;
+    auch das ist eine Materialeigenschaft, kein Fehler.</p>
 
-  <h2>7. Fertigung und Lieferung</h2>
-  <p>Die Fertigungszeit wird im Angebot genannt (in der Regel 3–4 Wochen ab
-  Vertragsschluss). Verzögert sich die Fertigung, informiert die Werkstatt
-  unaufgefordert. Der Versand erfolgt versichert; Ort und Art werden im Angebot
-  festgelegt.</p>
+    <h2><span class="n">7</span>Fertigung und Lieferung</h2>
+    <p>Die Fertigungszeit wird im Angebot genannt (in der Regel 3–4 Wochen ab
+    Vertragsschluss). Verzögert sich die Fertigung, informiert die Werkstatt
+    unaufgefordert. Der Versand erfolgt versichert; Ort und Art werden im Angebot
+    festgelegt.</p>
 
-  <h2>8. Gewährleistung</h2>
-  <p>Es gilt die gesetzliche Gewährleistung von zwei Jahren ab Übergabe. Liegt
-  ein Mangel vor, wird zunächst verbessert oder ausgetauscht — bei einem Unikat
-  in der Regel durch Nacharbeit oder einen Neuguss aus einer neuen Form. Schlägt
-  das fehl, stehen dir die weiteren gesetzlichen Rechte (Preisminderung,
-  Vertragsauflösung) zu.</p>
+    <h2><span class="n">8</span>Gewährleistung</h2>
+    <p>Es gilt die gesetzliche Gewährleistung von zwei Jahren ab Übergabe. Liegt
+    ein Mangel vor, wird zunächst verbessert oder ausgetauscht — bei einem Unikat
+    in der Regel durch Nacharbeit oder einen Neuguss aus einer neuen Form. Schlägt
+    das fehl, stehen dir die weiteren gesetzlichen Rechte (Preisminderung,
+    Vertragsauflösung) zu.</p>
 
-  <h2>9. Haftung</h2>
-  <p>Für leichte Fahrlässigkeit wird — außer bei Personenschäden — nicht
-  gehaftet. Die Haftung für Vorsatz und grobe Fahrlässigkeit sowie zwingende
-  gesetzliche Haftungstatbestände bleiben unberührt.</p>
+    <h2><span class="n">9</span>Haftung</h2>
+    <p>Für leichte Fahrlässigkeit wird — außer bei Personenschäden — nicht
+    gehaftet. Die Haftung für Vorsatz und grobe Fahrlässigkeit sowie zwingende
+    gesetzliche Haftungstatbestände bleiben unberührt.</p>
 
-  <h2>10. Eigentumsvorbehalt</h2>
-  <p>Das Schmuckstück bleibt bis zur vollständigen Bezahlung Eigentum der
-  Werkstatt.</p>
+    <h2><span class="n">10</span>Eigentumsvorbehalt</h2>
+    <p>Das Schmuckstück bleibt bis zur vollständigen Bezahlung Eigentum der
+    Werkstatt.</p>
 
-  <h2>11. Streitbeilegung</h2>
-  <p>Die Werkstatt ist zur Teilnahme an einem Verfahren vor einer
-  Verbraucherschlichtungsstelle weder verpflichtet noch bereit. Bei Anliegen
-  schreib einfach direkt an
-  <a href="mailto:info@atelierheinek.com">info@atelierheinek.com</a> — reden
-  hilft fast immer.</p>
+    <h2><span class="n">11</span>Streitbeilegung</h2>
+    <p>Die Werkstatt ist zur Teilnahme an einem Verfahren vor einer
+    Verbraucherschlichtungsstelle weder verpflichtet noch bereit. Bei Anliegen
+    schreib einfach direkt an
+    <a href="mailto:info@atelierheinek.com">info@atelierheinek.com</a> — reden
+    hilft fast immer.</p>
 
-  <h2>12. Anwendbares Recht</h2>
-  <p>Es gilt österreichisches Recht unter Ausschluss des UN-Kaufrechts. Für
-  Verbraucher gilt dies nur, soweit dadurch keine zwingenden Schutzbestimmungen
-  des Staates ihres gewöhnlichen Aufenthalts verdrängt werden.</p>
+    <h2><span class="n">12</span>Anwendbares Recht</h2>
+    <p>Es gilt österreichisches Recht unter Ausschluss des UN-Kaufrechts. Für
+    Verbraucher gilt dies nur, soweit dadurch keine zwingenden Schutzbestimmungen
+    des Staates ihres gewöhnlichen Aufenthalts verdrängt werden.</p>
+  </div>
 
-  <p class="stand">Stand: Juli 2026 — Fassung zur Eröffnung; bis zur
-  Gewerbeanmeldung werden keine Verträge geschlossen.</p>
-  <p class="foot"><a href="/faq.html">Fragen &amp; Antworten</a> · <a href="/impressum.html">Impressum</a> · <a href="/datenschutz.html">Datenschutzerklärung</a></p>
+  <div class="paper-foot">
+    <nav aria-label="Weitere Seiten">
+      <a href="/faq.html">Fragen &amp; Antworten</a>
+      <a href="/impressum.html">Impressum</a>
+      <a href="/datenschutz.html">Datenschutzerklärung</a>
+    </nav>
+    <span class="stand">Stand: Juli 2026 — Fassung zur Eröffnung; bis zur
+    Gewerbeanmeldung werden keine Verträge geschlossen.</span>
+  </div>
 </div>
 </body>
 </html>

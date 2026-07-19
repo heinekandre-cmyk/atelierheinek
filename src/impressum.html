@@ -5,87 +5,157 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="robots" content="noindex, follow" />
 <title>Impressum — Atelier Heinek</title>
-<meta name="theme-color" content="#141008" />
+<meta name="theme-color" content="#131211" />
 <link href="/vendor/fonts/fonts.css" rel="stylesheet" />
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20fill='%23131211'/%3E%3Ctext%20x='32'%20y='43'%20font-family='Georgia,serif'%20font-style='italic'%20font-size='30'%20fill='%23ece2cc'%20text-anchor='middle'%3EAH%3C/text%3E%3C/svg%3E" />
 <style>
+  /* ── Werkstattpapier · gemeinsames Layout der Unterseiten ─────────────
+     Graphit & Glut — ohne Glut: Bernstein als ruhiger Faden, der
+     Gusskanal als Rückgrat des Dokuments. */
   :root {
-    --bg: #131211; --ink: #edebe4; --ink-muted: #b9b4a8; --ink-faint: #7d786c;
-    --accent: #c98f3e; --line: rgba(237, 235, 228, 0.14);
+    --bg: #131211; --ink: #edebe4; --ink-soft: #d8d4c9;
+    --ink-muted: #aca698; --ink-faint: #7d786c;
+    --line: #37342e; --sand: #c8b896; --sand-deep: #a89272;
+    --accent: #c98f3e;
+    --spine: clamp(18px, 4.5vw, 30px);
+    --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     background: var(--bg); color: var(--ink-muted);
     font-family: 'Archivo', sans-serif; font-weight: 300;
-    font-size: 15px; line-height: 1.75;
+    font-size: 15.5px; line-height: 1.75;
     -webkit-font-smoothing: antialiased;
   }
-  .wrap { max-width: 620px; margin: 0 auto; padding: 56px 24px 72px; }
-  .back {
-    display: inline-block; margin-bottom: 40px;
-    font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase;
-    color: var(--ink-faint); text-decoration: none; transition: color 0.25s;
+  ::selection { background: rgba(201, 143, 62, 0.3); color: var(--ink); }
+  body::before {
+    content: ''; position: fixed; inset: 0; pointer-events: none;
+    background-image:
+      radial-gradient(circle at 30% 20%, rgba(200, 184, 150, 0.05) 0%, transparent 55%),
+      radial-gradient(circle at 1px 1px, rgba(200, 184, 150, 0.1) 1px, transparent 0);
+    background-size: auto, 4px 4px;
+    opacity: 0.7;
   }
-  .back:hover { color: var(--accent); }
-  .mono { font-family: 'Singlong', cursive; font-style: normal; font-size: 30px; color: var(--ink); line-height: 1; }
-  .brand { font-family: 'Playfair Display', serif; font-size: 11px; letter-spacing: 0.32em; text-transform: uppercase; color: var(--ink-faint); margin-top: 8px; }
-  h1 { font-family: 'Playfair Display', serif; font-weight: 400; font-size: 30px; color: var(--ink); margin: 40px 0 8px; }
-  h1 em { font-style: italic; color: var(--accent); }
+  .wrap { max-width: 680px; margin: 0 auto; padding: 38px 24px 64px; position: relative; }
+
+  .masthead { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; }
+  .masthead a {
+    font-size: 10px; letter-spacing: 0.24em; text-transform: uppercase;
+    color: var(--ink-faint); text-decoration: none; transition: color var(--transition);
+  }
+  .masthead a:hover { color: var(--sand); }
+  a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .ident { margin-top: 34px; display: flex; align-items: baseline; gap: 14px; }
+  .mono { font-family: 'Singlong', cursive; font-size: 34px; color: #e8dec8; line-height: 1; }
+  .brand {
+    font-family: 'Playfair Display', serif; font-size: 11px;
+    letter-spacing: 0.34em; text-transform: uppercase; color: var(--ink-faint);
+  }
+  .rule { height: 1px; background: var(--line); margin-top: 20px; }
+
+  .eyebrow {
+    margin-top: 34px; font-size: 10px; font-weight: 400;
+    letter-spacing: 0.3em; text-transform: uppercase; color: var(--sand-deep);
+  }
+  h1 {
+    font-family: 'Playfair Display', serif; font-weight: 500;
+    font-size: clamp(28px, 5.4vw, 34px); line-height: 1.15;
+    color: var(--ink); margin-top: 10px; text-wrap: balance;
+  }
+  h1 em { font-style: italic; font-weight: 400; color: var(--accent); }
+  .lead { margin-top: 14px; }
+
+  .doc { margin-top: 42px; border-left: 1px solid var(--line); padding-left: var(--spine); position: relative; }
+  .doc::before, .doc::after {
+    content: ''; position: absolute; left: -3px; width: 5px; height: 5px;
+    border-radius: 50%; background: var(--accent);
+  }
+  .doc::before { top: 0; }
+  .doc::after { bottom: 0; }
   h2 {
+    position: relative;
     font-family: 'Archivo', sans-serif; font-weight: 500; font-size: 11px;
-    letter-spacing: 0.22em; text-transform: uppercase; color: var(--ink-faint);
-    margin: 38px 0 10px; padding-top: 22px; border-top: 1px solid var(--line);
+    letter-spacing: 0.24em; text-transform: uppercase; color: var(--ink-soft);
+    margin: 40px 0 10px;
+  }
+  .doc h2:first-child { margin-top: 4px; }
+  h2::before {
+    content: ''; position: absolute; top: 0.7em;
+    left: calc(var(--spine) * -1); width: 11px; height: 1px;
+    background: var(--accent);
   }
   p { margin-bottom: 12px; }
   strong { font-weight: 500; color: var(--ink); }
   a { color: var(--accent); text-decoration: none; }
   a:hover { text-decoration: underline; }
-  .stand { margin-top: 44px; font-size: 11.5px; color: var(--ink-faint); }
-  .foot { margin-top: 10px; font-size: 11.5px; color: var(--ink-faint); }
+
+  .paper-foot {
+    margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--line);
+    display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 20px;
+    font-size: 11.5px; color: var(--ink-faint);
+  }
+  .paper-foot nav { display: flex; flex-wrap: wrap; gap: 6px 16px; }
+  .paper-foot a { color: var(--ink-faint); transition: color var(--transition); }
+  .paper-foot a:hover { color: var(--sand); text-decoration: none; }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <a class="back" href="/">&larr; Zur Startseite</a> <a class="back" href="/werkbank/">Zur Werkbank &rarr;</a>
-  <div class="mono">AH</div>
-  <div class="brand">Atelier Heinek</div>
+  <div class="masthead">
+    <a href="/">&larr; Startseite</a>
+    <a href="/werkbank/">Werkbank &rarr;</a>
+  </div>
+  <div class="ident">
+    <div class="mono" aria-hidden="true">AH</div>
+    <div class="brand">Atelier Heinek</div>
+  </div>
+  <div class="rule" aria-hidden="true"></div>
 
+  <p class="eyebrow">Werkstattpapier</p>
   <h1>Impressum &amp; <em>Offenlegung</em></h1>
-  <p>Angaben gemäß &sect; 25 Mediengesetz.</p>
+  <p class="lead">Angaben gemäß &sect; 25 Mediengesetz.</p>
 
-  <h2>Medieninhaber und für den Inhalt verantwortlich</h2>
-  <p><strong>Andre Heinek</strong><br />
-  6850 Dornbirn, Österreich<br />
-  E-Mail: <a href="mailto:info@atelierheinek.com">info@atelierheinek.com</a></p>
+  <div class="doc">
+    <h2>Medieninhaber und für den Inhalt verantwortlich</h2>
+    <p><strong>Andre Heinek</strong><br />
+    6850 Dornbirn, Österreich<br />
+    E-Mail: <a href="mailto:info@atelierheinek.com">info@atelierheinek.com</a></p>
 
-  <h2>Grundlegende Richtung der Website</h2>
-  <p>Diese Website ist eine private, derzeit nicht-kommerzielle Seite. Sie stellt
-  die handwerkliche Silberschmiedearbeit von Andre Heinek vor und bietet einen
-  3D-Konfigurator, mit dem sich Ringentwürfe gestalten und als unverbindliche
-  Anfrage übermitteln lassen.</p>
+    <h2>Grundlegende Richtung der Website</h2>
+    <p>Diese Website ist eine private, derzeit nicht-kommerzielle Seite. Sie stellt
+    die handwerkliche Silberschmiedearbeit von Andre Heinek vor und bietet einen
+    3D-Konfigurator, mit dem sich Ringentwürfe gestalten und als unverbindliche
+    Anfrage übermitteln lassen.</p>
 
-  <h2>Hinweis zur Auftragsannahme</h2>
-  <!-- NACH GEWERBEANMELDUNG: Abschnitt anpassen — GISA-Zahl, Kammerzugehörigkeit
-       (WKO Vorarlberg), Berufsbezeichnung und volle ladungsfähige Anschrift
-       ergänzen; diesen Hinweis entfernen. -->
-  <p>Die Gewerbeanmeldung ist in Vorbereitung. <strong>Bis zu deren Abschluss
-  werden keine Aufträge angenommen und keine Verkäufe getätigt.</strong>
-  Alle Preisangaben auf dieser Website sind unverbindliche Richtwerte und stellen
-  kein Angebot im rechtlichen Sinn dar.</p>
+    <h2>Hinweis zur Auftragsannahme</h2>
+    <!-- NACH GEWERBEANMELDUNG: Abschnitt anpassen — GISA-Zahl, Kammerzugehörigkeit
+         (WKO Vorarlberg), Berufsbezeichnung und volle ladungsfähige Anschrift
+         ergänzen; diesen Hinweis entfernen. -->
+    <p>Die Gewerbeanmeldung ist in Vorbereitung. <strong>Bis zu deren Abschluss
+    werden keine Aufträge angenommen und keine Verkäufe getätigt.</strong>
+    Alle Preisangaben auf dieser Website sind unverbindliche Richtwerte und stellen
+    kein Angebot im rechtlichen Sinn dar.</p>
 
-  <h2>Urheberrecht</h2>
-  <p>Sämtliche Inhalte dieser Website — Texte, Gestaltung, 3D-Darstellungen und
-  Bilder — sind urheberrechtlich geschützt. Jede Verwendung außerhalb des
-  privaten Gebrauchs bedarf der vorherigen Zustimmung.</p>
+    <h2>Urheberrecht</h2>
+    <p>Sämtliche Inhalte dieser Website — Texte, Gestaltung, 3D-Darstellungen und
+    Bilder — sind urheberrechtlich geschützt. Jede Verwendung außerhalb des
+    privaten Gebrauchs bedarf der vorherigen Zustimmung.</p>
 
-  <h2>Haftung</h2>
-  <p>Die Inhalte dieser Website wurden mit Sorgfalt erstellt. Für Richtigkeit,
-  Vollständigkeit und Aktualität wird dennoch keine Gewähr übernommen.
-  Maßangaben und Richtpreise aus dem Konfigurator sind Näherungswerte;
-  verbindlich ist ausschließlich ein individuell bestätigtes Angebot.</p>
+    <h2>Haftung</h2>
+    <p>Die Inhalte dieser Website wurden mit Sorgfalt erstellt. Für Richtigkeit,
+    Vollständigkeit und Aktualität wird dennoch keine Gewähr übernommen.
+    Maßangaben und Richtpreise aus dem Konfigurator sind Näherungswerte;
+    verbindlich ist ausschließlich ein individuell bestätigtes Angebot.</p>
+  </div>
 
-  <p class="stand">Stand: Juni 2026</p>
-  <p class="foot"><a href="/faq.html">Fragen &amp; Antworten</a> · <a href="/agb.html">AGB</a> · <a href="/datenschutz.html">Datenschutzerklärung</a></p>
+  <div class="paper-foot">
+    <nav aria-label="Weitere Seiten">
+      <a href="/faq.html">Fragen &amp; Antworten</a>
+      <a href="/agb.html">AGB</a>
+      <a href="/datenschutz.html">Datenschutzerklärung</a>
+    </nav>
+    <span>Stand: Juni 2026</span>
+  </div>
 </div>
 </body>
 </html>
