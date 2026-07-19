@@ -5,10 +5,13 @@
   "description": "Atelier Heinek — Eintrittsseite und Ringkonfigurator (Werkbank)",
   "type": "module",
   "scripts": {
-    "build": "node build.mjs"
+    "build": "node build.mjs",
+    "deploy": "wrangler deploy",
+    "preview": "wrangler dev"
   },
   "devDependencies": {
     "csso": "^5.0.5",
-    "terser": "^5.31.0"
+    "terser": "^5.31.0",
+    "wrangler": "^4.112.0"
   }
 }
