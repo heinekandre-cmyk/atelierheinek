@@ -6,7 +6,7 @@
 <title>Die Werkbank — Ring aus dem Sand · Atelier Heinek</title>
 <meta name="description" content="Ringkonfigurator von Atelier Heinek. 925 Silber, handgegossen im Delft-Sand in Vorarlberg. Profil, Größe, Maße und Oberfläche wählen. Aus dem Sand. In die Hand." />
 <link rel="canonical" href="https://atelierheinek.com/werkbank/" />
-<meta name="theme-color" content="#131211" />
+<meta name="theme-color" content="#FAFAF9" />
 <meta property="og:type" content="website" />
 <meta property="og:site_name" content="Atelier Heinek" />
 <meta property="og:title" content="Die Werkbank — entwirf deinen Ring" />
@@ -30,7 +30,7 @@
 <link href="/vendor/fonts/fonts.css" rel="stylesheet" />
 <style>
   /* ═══════════════════════════════════════════════════════════════════
-     DIE DUNKLE VITRINE — Werkbank v4
+     DIE HELLE GALERIE — Werkbank v5 (Produktlicht nach Referenz)
      Darkroom-Editorial: Der Ring schwebt als Museumsstück im warmen
      Dunkel, Creme-Typografie ist der einzige Schmuck. Kein Panel, keine
      Karten, keine Schatten — Tiefe entsteht aus zwei Flächenstufen und
@@ -48,14 +48,14 @@
        Die einzige gemischte Schrift ist die Source-Serif-Beschreibung.
        Haltung: Playfair versal, Zeilenhöhe 0.92 — Type als Skulptur. */
   :root {
-    --night: #131211;        /* Bühne, Seite */
-    --coal: #1e1c19;         /* die eine erhöhte Fläche */
+    --night: #F7F5F2;        /* Seite — die helle Galerie */
+    --coal: #FFFFFF;         /* die eine erhöhte Fläche */
     --bark: #33261a;         /* gefüllter Knopf — warmes Rindenbraun */
-    --hair: #3c3933;         /* Haarlinien, gestrichelte Trenner */
-    --drift: #7d786c;        /* gedämpfte Strukturelemente */
-    --cream: #ece2cc;        /* alle Schrift */
-    --cream-dim: #a8a396;    /* Nebenstimmen */
-    --ember: #e0772b;        /* der einzige Akzent */
+    --hair: #D6D3D1;         /* Haarlinien, gestrichelte Trenner */
+    --drift: #79716B;        /* gedämpfte Strukturelemente */
+    --cream: #1C1917;        /* alle Schrift — jetzt Tinte */
+    --cream-dim: #57534E;    /* Nebenstimmen */
+    --ember: #A16207;        /* der einzige Akzent — Glut kühlt zu Gold */
     --paper: #ece2cc;
     --t: 0.2s cubic-bezier(0.23, 1, 0.32, 1);
     --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
@@ -70,18 +70,15 @@
     font-family: var(--font-body); font-size: 15px; line-height: 1.55;
     -webkit-font-smoothing: antialiased;
   }
-  ::selection { background: rgba(224, 119, 43, 0.28); color: var(--cream); }
+  ::selection { background: rgba(161, 98, 7, 0.22); color: var(--cream); }
   :where(a, button, summary, input, [tabindex]):focus-visible { outline: 2px solid var(--cream); outline-offset: 3px; }
 
   /* ── Die Bühne: fixiert, volle Fläche ────────────────────────────── */
   .stage { position: fixed; inset: 0; z-index: 0;
-    background: radial-gradient(ellipse at 50% 38%, #232220 0%, #161513 48%, #0d0c0b 100%); }
+    background: radial-gradient(ellipse at 50% 38%, #fcfbf9 0%, #f1efeb 55%, #e2dfd9 100%); }
   .stage::after { content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 2;
-    background: radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,0.38) 100%); }
-  .stage-grain { position: absolute; inset: 0; pointer-events: none; z-index: 2;
-    opacity: 0.4; mix-blend-mode: multiply;
-    background-image: radial-gradient(circle at 1px 1px, rgba(236,234,228,0.05) 1px, transparent 0);
-    background-size: 3px 3px; }
+    background: radial-gradient(ellipse at center, transparent 55%, rgba(60, 55, 45, 0.10) 100%); }
+  .stage-grain { display: none; } /* Korn-Regel: Korn gehört der dunklen Welt */
   #canvas { width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; -webkit-tap-highlight-color: transparent; }
   #canvas:active { cursor: grabbing; }
 
@@ -146,18 +143,18 @@
     font-family: var(--font-display); font-weight: 700; text-transform: uppercase;
     line-height: 0.92; letter-spacing: 0.005em; color: var(--cream); text-wrap: balance;
   }
-  h1 { font-size: clamp(44px, 6.5vw, 76px); }
-  h2 { font-size: clamp(30px, 4vw, 44px); }
+  h1 { font-size: clamp(58px, 9vw, 124px); }
+  h2 { font-size: clamp(42px, 5.8vw, 78px); }
   .k-label {
-    font-family: var(--font-mono); font-size: 10px; font-weight: 500;
+    font-family: var(--font-mono); font-size: 11px; font-weight: 500;
     letter-spacing: 0.14em; text-transform: uppercase; color: var(--cream-dim);
     margin-bottom: 16px;
   }
   .k-label b { color: var(--ember); font-weight: 500; }
-  .lese { font-family: var(--font-body); font-size: 17px; font-weight: 400; line-height: 1.5; color: var(--cream); }
+  .lese { font-family: var(--font-body); font-size: 19px; font-weight: 400; line-height: 1.5; color: var(--cream); }
   .lese .dim { color: var(--cream-dim); }
   .lese em { font-style: italic; }
-  .note { margin-top: 14px; font-family: 'Caveat', cursive; font-size: 19px; line-height: 1.3; color: var(--cream-dim); }
+  .note { margin-top: 14px; font-family: 'Caveat', cursive; font-size: 21px; line-height: 1.3; color: var(--cream-dim); }
   .note::before { content: '— '; color: var(--drift); }
 
   /* ── Ghost-Pills: die einzige Steuer-Vokabel ─────────────────────── */
@@ -165,7 +162,7 @@
   .pill {
     border-radius: 999px; border: 1px solid var(--hair); background: transparent;
     color: var(--cream-dim); cursor: pointer;
-    font-family: var(--font-mono); font-size: 10.5px; font-weight: 500;
+    font-family: var(--font-mono); font-size: 11.5px; font-weight: 500;
     letter-spacing: 0.08em; text-transform: uppercase;
     padding: 10px 20px; min-height: 40px;
     transition: color var(--t), border-color var(--t), background-color var(--t), transform 0.14s var(--ease-out);
@@ -227,7 +224,7 @@
   .opt-hint[hidden] { display: none; }
 
   /* ── Die Übergabe ─────────────────────────────────────────────────── */
-  .satz { font-family: var(--font-body); font-size: 17px; line-height: 1.6; color: var(--cream); max-width: 34ch; }
+  .satz { font-family: var(--font-body); font-size: 18px; line-height: 1.6; color: var(--cream); max-width: 34ch; }
   .satz b { font-family: var(--font-mono); font-size: 13px; font-weight: 500; color: var(--cream); font-variant-numeric: tabular-nums; }
   .ledger { margin-top: 26px; max-width: 340px; }
   .ledger div { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 9px 0; border-bottom: 1px dashed var(--hair); }
@@ -247,14 +244,14 @@
   .brief p em { font-style: italic; color: #171008; }
   .brief .sig { font-family: 'Singlong', cursive; font-size: 25px; color: #1d150c; line-height: 1; margin-top: 12px; position: relative; }
 
-  .cta { /* der eine gefüllte Knopf */
-    display: inline-block; border-radius: 999px; border: 1px solid var(--bark);
-    background: var(--bark); color: var(--cream); cursor: pointer;
+  .cta { /* der eine gefüllte Knopf — Gold, wie die Galerie es verlangt */
+    display: inline-block; border-radius: 999px; border: 1px solid var(--ember);
+    background: var(--ember); color: #FFFFFF; cursor: pointer;
     font-family: var(--font-mono); font-size: 11px; font-weight: 500;
     letter-spacing: 0.1em; text-transform: uppercase; padding: 15px 34px;
     transition: background-color var(--t), border-color var(--t), transform 0.14s var(--ease-out);
   }
-  .cta:hover { background: #40301f; border-color: #40301f; }
+  .cta:hover { background: #854D0E; border-color: #854D0E; }
   .cta:active { transform: scale(0.98); }
   .fallback { max-width: 460px; margin-top: 16px; text-align: left; animation: rise 0.3s var(--ease-out); }
   .fallback[hidden] { display: none; }
@@ -306,7 +303,7 @@
   .load-error .m { font-family: 'Singlong', cursive; font-size: 30px; margin-bottom: 18px; }
   .load-error h1 { font-size: 22px; line-height: 1.1; margin-bottom: 10px; }
   .load-error p { font-size: 13.5px; line-height: 1.6; color: var(--cream-dim); margin-bottom: 22px; text-transform: none; }
-  .load-error button { border-radius: 999px; background: var(--cream); border: 1px solid var(--cream); color: var(--night); font-family: var(--font-mono); font-size: 9.5px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; padding: 13px 26px; cursor: pointer; }
+  .load-error button { border-radius: 999px; background: var(--cream); border: 1px solid var(--cream); color: #FAFAF9; font-family: var(--font-mono); font-size: 9.5px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; padding: 13px 26px; cursor: pointer; }
 
   /* Erst-Einblendung */
   .kapitel > * { opacity: 0; transform: translateY(10px); transition: opacity 0.5s var(--ease-out), transform 0.5s var(--ease-out); }
@@ -341,8 +338,8 @@
     .mass-lese, .mass-hint, details.mass-help { text-align: left; }
     details.mass-help p { margin-left: 0; }
     .opt, .opt-hint, .liefer { margin-left: 0; }
-    h1 { font-size: clamp(38px, 11vw, 54px); }
-    h2 { font-size: clamp(27px, 8vw, 36px); }
+    h1 { font-size: clamp(44px, 13vw, 64px); }
+    h2 { font-size: clamp(34px, 10vw, 48px); }
   }
 
   /* Druck: die Übergabe ist das Dokument */
@@ -529,11 +526,10 @@
 // Materialkalibrierung und die Preiskalkulation (Geschäftsdaten).
 // Der Ring als Museumsstück: fixe Bühne, Kapitel-Kamera, Ghost-Pills.
 // ═══════════════════════════════════════════════════════════════════════
-let THREE, OrbitControls, RectAreaLightUniformsLib;
+let THREE, OrbitControls;
 try {
   THREE = await import('three');
   ({ OrbitControls } = await import('three/addons/controls/OrbitControls.js'));
-  ({ RectAreaLightUniformsLib } = await import('three/addons/lights/RectAreaLightUniformsLib.js'));
 } catch (err) {
   console.error('[3D] Three.js konnte nicht geladen werden:', err);
   const eo = document.getElementById('loadError'); if (eo) eo.hidden = false;
@@ -764,75 +760,127 @@ function sandformNr() {
 }
 
 // ── Bühne ──────────────────────────────────────────────────────────────
-RectAreaLightUniformsLib.init();
 const canvas = document.getElementById('canvas');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.12;
+renderer.toneMappingExposure = 1.0;
 
 const scene = new THREE.Scene();
 
-// Hintergrund: gemalter Verlauf — Restlicht der Werkbanklampe oben,
-// unten das Umbra des Bodens.
-{
-  const c = document.createElement('canvas'); c.width = 2; c.height = 512;
-  const g = c.getContext('2d').createLinearGradient(0, 0, 0, 512);
-  g.addColorStop(0.00, '#252321'); g.addColorStop(0.52, '#151412'); g.addColorStop(1.00, '#0c0b0a');
-  const ctx = c.getContext('2d'); ctx.fillStyle = g; ctx.fillRect(0, 0, 2, 512);
-  const bg = new THREE.CanvasTexture(c); bg.colorSpace = THREE.SRGBColorSpace;
-  scene.background = bg;
-}
+// Hintergrund: vertikaler Verlauf als DataTexture
+  {
+    const h = 512, data = new Uint8Array(h * 4);
+    const stops = [[0.0, 0xfc, 0xfb, 0xf9], [0.55, 0xf1, 0xef, 0xeb], [1.0, 0xe2, 0xdf, 0xd9]];
+    for (let y = 0; y < h; y++) {
+      const t = y / (h - 1);
+      let a = stops[0], b = stops[stops.length - 1];
+      for (let i = 0; i < stops.length - 1; i++) if (t >= stops[i][0] && t <= stops[i + 1][0]) { a = stops[i]; b = stops[i + 1]; }
+      const f = (t - a[0]) / Math.max(1e-6, b[0] - a[0]);
+      data[y * 4] = a[1] + (b[1] - a[1]) * f;
+      data[y * 4 + 1] = a[2] + (b[2] - a[2]) * f;
+      data[y * 4 + 2] = a[3] + (b[3] - a[3]) * f;
+      data[y * 4 + 3] = 255;
+    }
+    const tex = new THREE.DataTexture(data, 1, h);
+    tex.colorSpace = THREE.SRGBColorSpace; tex.needsUpdate = true;
+    tex.magFilter = THREE.LinearFilter; tex.minFilter = THREE.LinearFilter;
+    scene.background = tex;
+  }
 
-// Studio-Umgebung fürs Metall: eine kleine, prozedural gemalte Lichtwelt
-// (dunkler Raum, ein großer Softbox-Schirm, zwei Kanten-Streifen), über
-// PMREM zur Environment-Map. Metall lebt von dem, was es spiegelt.
-{
-  const c = document.createElement('canvas'); c.width = 1024; c.height = 512;
-  const x = c.getContext('2d');
-  x.fillStyle = '#0b0a09'; x.fillRect(0, 0, 1024, 512);
-  const horizon = x.createLinearGradient(0, 300, 0, 512);
-  horizon.addColorStop(0, '#141210'); horizon.addColorStop(1, '#060505');
-  x.fillStyle = horizon; x.fillRect(0, 300, 1024, 212);
-  const soft = (cx, cy, w, h, bright) => {
-    const grd = x.createRadialGradient(cx, cy, 4, cx, cy, Math.max(w, h));
-    grd.addColorStop(0, bright); grd.addColorStop(1, 'rgba(0,0,0,0)');
-    x.fillStyle = grd; x.fillRect(cx - w, cy - h, w * 2, h * 2);
-  };
-  soft(300, 130, 260, 120, 'rgba(255,244,228,0.98)');  // Hauptschirm, warm
-  soft(820, 190, 150, 70,  'rgba(214,226,255,0.55)');  // kühle Gegenkante
-  soft(560, 460, 300, 60,  'rgba(200,184,150,0.10)');  // Bodenschein, Sandton
-  const tex = new THREE.CanvasTexture(c);
-  tex.mapping = THREE.EquirectangularReflectionMapping; tex.colorSpace = THREE.SRGBColorSpace;
-  const pmrem = new THREE.PMREMGenerator(renderer);
-  scene.environment = pmrem.fromEquirectangular(tex).texture;
-  tex.dispose(); pmrem.dispose();
-}
+// Studio-Environment: LDR-Lichtwelt als Uint8-Equirect — bewusst OHNE
+  // HDR, damit Labor (WebGL1, kein Half-Float) und Browser exakt dasselbe
+  // Bild rechnen. Helligkeit kommt über envMapIntensity + Exposure.
+  // Aufbau: nirgendwo reines Schwarz, ein Horizontband rundum (füllt die
+  // untere Ringflanke), Key-Schirm, kühles Gegenpanel, Zenitleiste.
+  {
+    const EW = 512, EH = 256;
+    const px = new Uint8Array(EW * EH * 4);
+    const smooth = (e0, e1, x) => { const t = Math.min(1, Math.max(0, (x - e0) / (e1 - e0))); return t * t * (3 - 2 * t); };
+    const box = (u, v, u0, u1, v0, v1, soft) =>
+      smooth(u0 - soft, u0 + soft, u) * (1 - smooth(u1 - soft, u1 + soft, u)) *
+      smooth(v0 - soft, v0 + soft, v) * (1 - smooth(v1 - soft, v1 + soft, v));
+    for (let y = 0; y < EH; y++) {
+      const v = y / (EH - 1);
+      for (let x = 0; x < EW; x++) {
+        const u = x / (EW - 1);
+        // Helles Studio: weißer Raum, weiche graue Fahnen — das Silber
+        // bekommt sanfte Grau-Verläufe statt harter Schwarzbänder, wie
+        // im Produktfoto. Boden hell, Zenit strahlend.
+        const dome = Math.pow(Math.max(0, 1 - v / 0.55), 1.1);
+        let r = 120 + dome * 135, g = 118 + dome * 135, b = 114 + dome * 133;
+        const flags = Math.min(1,
+          box(u, v, 0.30, 0.375, 0.18, 0.70, 0.030) +
+          box(u, v, 0.64, 0.71, 0.18, 0.70, 0.030) +
+          box(u, v, 0.96, 1.0, 0.18, 0.70, 0.030) + box(u, v, 0.0, 0.025, 0.18, 0.70, 0.030));
+        r -= flags * 170; g -= flags * 168; b -= flags * 164;
+        let k = smooth(0.72, 1.0, v);                   // Boden: helles Stein
+        r += k * 30; g += k * 28; b += k * 22;
+        k = box(u, v, 0.10, 0.26, 0.06, 0.34, 0.006);  // Spitzlicht
+        r += k * 90; g += k * 90; b += k * 90;
+        const i = (y * EW + x) * 4;
+        px[i] = Math.min(255, r); px[i + 1] = Math.min(255, g);
+        px[i + 2] = Math.min(255, b); px[i + 3] = 255;
+      }
+    }
+    const tex = new THREE.DataTexture(px, EW, EH);
+    tex.mapping = THREE.EquirectangularReflectionMapping;
+    tex.colorSpace = THREE.SRGBColorSpace; tex.needsUpdate = true;
+    tex.magFilter = THREE.LinearFilter; tex.minFilter = THREE.LinearFilter;
+    try {
+      const pmrem = new THREE.PMREMGenerator(renderer);
+      scene.environment = pmrem.fromEquirectangular(tex).texture;
+      pmrem.dispose();
+    } catch (e) {
+      console.error('[env] PMREM fehlgeschlagen, nutze Equirect direkt:', e.message);
+      scene.environment = tex;
+    }
+  }
 
 // Licht: Hemisphäre als Grundton, ein warmer Schlüssel, eine Softbox.
-scene.add(new THREE.HemisphereLight(0xfff8f0, 0x302010, 0.10));
-const key = new THREE.DirectionalLight(0xfff4e6, 0.85);
-key.position.set(5, 10, 7.5); scene.add(key);
-const box = new THREE.RectAreaLight(0xfff2e0, 3.6, 26, 40);
-box.position.set(-14, 16, 12); box.lookAt(0, 0, 0); scene.add(box);
+scene.add(new THREE.HemisphereLight(0xffffff, 0xd8d2c8, 0.3));
+const key = new THREE.DirectionalLight(0xfff2e2, 0.45);
+key.position.set(-8, 12, 9); scene.add(key);
+const fill = new THREE.DirectionalLight(0xdce6ff, 0.15);
+fill.position.set(10, 6, -8); scene.add(fill);
+// Ringlicht an der Kamera: folgt jeder Fahrt, hebt die Frontflanke.
+const headlamp = new THREE.DirectionalLight(0xfff4e6, 0.25);
+scene.add(headlamp);
 
-// Boden: eine dunkle Scheibe knapp unter dem Ring — fängt den Schein.
-{
-  const floor = new THREE.Mesh(
-    new THREE.CircleGeometry(80, 64),
-    new THREE.MeshStandardMaterial({ color: 0x11100f, roughness: 0.92, metalness: 0.0 })
-  );
-  floor.rotation.x = -Math.PI / 2; floor.position.y = -16;
-  scene.add(floor);
-}
+// Werkstattlampe: der Spot von oben — die sichtbare Lichtquelle der
+// Szene. Er legt den Lichtkegel auf den Tisch und kantet den Ring.
+const lamp = new THREE.SpotLight(0xffffff, 160, 90, 0.7, 0.95, 1.6);
+lamp.position.set(0, 26, 6); lamp.target.position.set(0, 0, 0);
+scene.add(lamp); scene.add(lamp.target);
+
+// Boden verschwindet im weißen Raum — was bleibt, ist der weiche
+  // Kontaktschatten: als DataTexture gebacken, überall identisch.
+  {
+    const S = 128, data = new Uint8Array(S * S * 4);
+    for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+      const dx = (x / (S - 1) - 0.5) * 2, dy = (y / (S - 1) - 0.5) * 2;
+      const d = Math.hypot(dx, dy);
+      const a = Math.pow(Math.max(0, 1 - d), 1.8) * 0.30;
+      const i = (y * S + x) * 4;
+      data[i] = 30; data[i + 1] = 27; data[i + 2] = 23; data[i + 3] = Math.round(a * 255);
+    }
+    const tex = new THREE.DataTexture(data, S, S); tex.needsUpdate = true;
+    tex.magFilter = THREE.LinearFilter; tex.minFilter = THREE.LinearFilter;
+    const blob = new THREE.Mesh(
+      new THREE.PlaneGeometry(15, 7.5),
+      new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false })
+    );
+    blob.rotation.x = -Math.PI / 2; blob.position.y = -5.45;
+    scene.add(blob);
+  }
 
 const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 500);
-camera.position.set(0, 9, 34);
+camera.position.set(5.5, 3.5, 26.5);
 const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true; controls.dampingFactor = 0.06;
 controls.enablePan = false;
-controls.minDistance = 16; controls.maxDistance = 70;
+controls.minDistance = 12; controls.maxDistance = 60;
 controls.autoRotate = false; controls.autoRotateSpeed = 1.1; // v4: Kapitel-Kamera führt
 controls.target.set(0, 0, 0);
 function fitStage() {
@@ -846,50 +894,67 @@ fitStage();
 
 // ── Sandkorn als Normal-Map (frisch, kompakt) ─────────────────────────
 // Höhenrauschen → Sobel → Normale. Kachelt nahtlos über die UV-Wicklung.
-function makeSandNormal(size = 256) {
-  const n = size * size, hgt = new Float32Array(n);
-  let s = 1337;
-  const rnd = () => { s |= 0; s = (s + 0x6D2B79F5) | 0; let t = Math.imul(s ^ (s >>> 15), 1 | s); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
-  for (let i = 0; i < n; i++) hgt[i] = rnd();
-  // zwei Glättungsdurchgänge — aus Rauschen wird Korn
-  const sm = new Float32Array(n);
-  for (let pass = 0; pass < 2; pass++) {
-    for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
-      let a = 0;
-      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++)
-        a += hgt[((y + dy + size) % size) * size + ((x + dx + size) % size)];
-      sm[y * size + x] = a / 9;
-    }
-    hgt.set(sm);
+function makeSandMaps(size = 512) {
+  // Mehrskaliges Value-Noise: grobe Struktur + Mittelkorn + Feinkorn,
+  // dazu eingesenkte Poren. Daraus Normal-Map (Relief) und Roughness-
+  // Map (ungleichmäßiges Glitzern) — die zwei Dinge, die echten Guss
+  // von glattem CGI-Rauschen unterscheiden.
+  const lat = (n) => { const a = new Float32Array((n + 1) * (n + 1));
+    let s0 = 4711; const rnd = () => { s0 |= 0; s0 = (s0 + 0x6D2B79F5) | 0; let t = Math.imul(s0 ^ (s0 >>> 15), 1 | s0); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+    for (let i = 0; i < a.length; i++) a[i] = rnd(); return a; };
+  const sm = (t) => t * t * (3 - 2 * t);
+  function valueNoise(grid, cells, u, v) {
+    const x = u * cells, y = v * cells;
+    const x0 = Math.floor(x) % cells, y0 = Math.floor(y) % cells;
+    const fx = sm(x - Math.floor(x)), fy = sm(y - Math.floor(y));
+    const g = (ix, iy) => grid[((iy % cells) * (cells + 1)) + (ix % cells)];
+    return g(x0, y0) * (1 - fx) * (1 - fy) + g(x0 + 1, y0) * fx * (1 - fy)
+         + g(x0, y0 + 1) * (1 - fx) * fy + g(x0 + 1, y0 + 1) * fx * fy;
   }
-  const img = new Uint8ClampedArray(n * 4);
+  const gA = lat(24), gB = lat(96), gC = lat(288);
+  const n = size * size, hgt = new Float32Array(n);
+  for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
+    const u = x / size, v = y / size;
+    const coarse = valueNoise(gA, 24, u, v);
+    let h = coarse * 0.42 + valueNoise(gB, 96, u, v) * 0.36 + valueNoise(gC, 288, u, v) * 0.22;
+    if (coarse < 0.22) h -= (0.22 - coarse) * 1.6;   // Poren: eingesunkene Nester
+    hgt[y * size + x] = h;
+  }
+  const nrm = new Uint8Array(n * 4), rgh = new Uint8Array(n * 4);
   for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
     const l = hgt[y * size + ((x - 1 + size) % size)], r = hgt[y * size + ((x + 1) % size)];
-    const u = hgt[((y - 1 + size) % size) * size + x], d = hgt[((y + 1) % size) * size + x];
-    const nx = (l - r) * 2.2, ny = (u - d) * 2.2;
+    const u2 = hgt[((y - 1 + size) % size) * size + x], d = hgt[((y + 1) % size) * size + x];
+    const nx = (l - r) * 3.0, ny = (u2 - d) * 3.0;
     const iz = 1 / Math.hypot(nx, ny, 1), i4 = (y * size + x) * 4;
-    img[i4] = (nx * iz * 0.5 + 0.5) * 255; img[i4 + 1] = (ny * iz * 0.5 + 0.5) * 255;
-    img[i4 + 2] = (iz * 0.5 + 0.5) * 255; img[i4 + 3] = 255;
+    nrm[i4] = (nx * iz * 0.5 + 0.5) * 255; nrm[i4 + 1] = (ny * iz * 0.5 + 0.5) * 255;
+    nrm[i4 + 2] = (iz * 0.5 + 0.5) * 255; nrm[i4 + 3] = 255;
+    // Roughness: Täler matter, Spitzen glänzender + feines Glitzerrauschen
+    const h = hgt[y * size + x];
+    const rough = Math.max(0.26, Math.min(0.68, 0.52 - (h - 0.5) * 0.34 + (valueNoise(gC, 288, x / size + 0.37, y / size + 0.61) - 0.5) * 0.16));
+    rgh[i4] = 0; rgh[i4 + 1] = Math.round(rough * 255); rgh[i4 + 2] = 0; rgh[i4 + 3] = 255;
   }
-  const c = document.createElement('canvas'); c.width = c.height = size;
-  c.getContext('2d').putImageData(new ImageData(img, size, size), 0, 0);
-  const t = new THREE.CanvasTexture(c);
-  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(6, 1);
-  return t;
+  const mk = (data) => { const t = new THREE.DataTexture(data, size, size);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(6, 1);
+    t.magFilter = THREE.LinearFilter; t.minFilter = THREE.LinearFilter; t.needsUpdate = true; return t; };
+  return { normal: mk(nrm), rough: mk(rgh) };
 }
-const sandNormalTex = makeSandNormal();
+const sandMaps = makeSandMaps();
 
 // ── Materialien aus der Kalibrierung ──────────────────────────────────
+const ENV_BOOST = 1.0; // im Renderlabor mit lebender Env-Pipeline abgestimmt (v5.1)
 const MAT3D = {};
 for (const [k, m] of Object.entries(MATERIALS)) {
   const outer = new THREE.MeshStandardMaterial({
     color: m.outerColor, roughness: m.outerRoughness, metalness: m.outerMetal,
-    envMapIntensity: m.envIntensity
+    envMapIntensity: m.envIntensity * ENV_BOOST
   });
-  if (m.sandNormal) { outer.normalMap = sandNormalTex; outer.normalScale = new THREE.Vector2(m.normalStrength, m.normalStrength); }
+  if (m.sandNormal) {
+    outer.normalMap = sandMaps.normal; outer.normalScale = new THREE.Vector2(m.normalStrength * 1.25, m.normalStrength * 1.25);
+    outer.roughnessMap = sandMaps.rough; outer.roughness = 1.0; // Absolutwerte in der Map
+  }
   const inner = new THREE.MeshStandardMaterial({
     color: m.innerColor, roughness: m.innerRoughness, metalness: m.innerMetal,
-    envMapIntensity: m.innerEnv
+    envMapIntensity: m.innerEnv * ENV_BOOST
   });
   MAT3D[k] = { outer, inner };
 }
@@ -898,7 +963,8 @@ for (const [k, m] of Object.entries(MATERIALS)) {
 // Rotationskörper aus der Profilkontur. Innen-/Außen-Trennung über die
 // Flächennormale (Bohrung = Normale zeigt zur Achse), analytisch glatte,
 // nahtlose Normalen aus der Profil-Tangente.
-function makeRingGeometries(profileDef, w, h, innerR) {
+function hash3(x, y, z) { const t = Math.sin(x * 12.9898 + y * 78.233 + z * 37.719) * 43758.5453; return t - Math.floor(t); }
+function makeRingGeometries(profileDef, w, h, innerR, displace = 0) {
   const profile = profilePoints(profileDef, w, h);
   const N = 256, P = profile.length;
   let signedArea = 0;
@@ -929,10 +995,13 @@ function makeRingGeometries(profileDef, w, h, innerR) {
       const jj = ((jIndex % P) + P) % P;
       const a = i / N * 2 * Math.PI, ca = Math.cos(a), sa = Math.sin(a);
       const [u, v] = profile[jj];
-      positions.push((innerR + v) * ca, u, (innerR + v) * sa);
-      uvs.push(i / N, jIndex / P);
+      let px = (innerR + v) * ca, py = u, pz = (innerR + v) * sa;
       const na = pn[jj][0], nr = pn[jj][1];
       const nx = nr * ca, ny = na, nz = nr * sa;
+      if (displace) { const dn = (hash3(px * 9.1, py * 9.7, pz * 9.3) - 0.5) * displace;
+        px += nx * dn; py += ny * dn; pz += nz * dn; }
+      positions.push(px, py, pz);
+      uvs.push(i / N, jIndex / P);
       const il = 1 / (Math.hypot(nx, ny, nz) || 1);
       normals.push(nx * il, ny * il, nz * il);
       idxMap.set(key, vc);
@@ -961,10 +1030,18 @@ function rebuildRing() {
     scene.remove(ringGroup); ringGroup = null;
   }
   const innerR = diameterForEU(state.euSize) / 2;
-  const g = makeRingGeometries(PROFILES[state.profileKey], state.width, state.height, innerR);
+  const cast = !!MATERIALS[state.material].sandNormal;
+  const g = makeRingGeometries(PROFILES[state.profileKey], state.width, state.height, innerR, cast ? 0.05 : 0);
   const pair = MAT3D[state.material];
   ringGroup = new THREE.Group();
   ringGroup.add(new THREE.Mesh(g.outer, pair.outer), new THREE.Mesh(g.inner, pair.inner));
+  // Normierung: der Ring erscheint immer in derselben Bildgröße — sonst
+  // sprengt EU 72 breit den Viewport, während EU 42 schmal verschwindet.
+  const baseScale = 5.4 / (innerR + state.height);
+  ringGroup.scale.setScalar(baseScale);
+  ringGroup.rotation.x = -Math.PI / 2; // stehend, Front zur Kamera
+  ringGroup.userData.baseScale = baseScale;
+  ringGroup.userData.cast = cast;
   scene.add(ringGroup);
   if (!reducedMotion) pulse = 1;
 }
@@ -980,10 +1057,11 @@ function loop() {
   raf = requestAnimationFrame(loop);
   camTick();
   controls.update();
+  headlamp.position.copy(camera.position);
   if (ringGroup && pulse > 0) {
     pulse = Math.max(0, pulse - 0.06);
     const s = 1 - 0.03 * Math.sin(pulse * Math.PI);
-    ringGroup.scale.setScalar(s);
+    ringGroup.scale.setScalar((ringGroup.userData.baseScale || 1) * s);
   }
   renderer.render(scene, camera);
 }
@@ -1006,11 +1084,20 @@ const isMobile = window.matchMedia('(max-width: 860px)').matches;
 // die Übergabe tritt einen Schritt zurück.
 const MOB_Y = isMobile ? -7 : 0;
 const CHAPTER_CAM = {
-  hero:      { p: [0, 9, 34],  t: [0, MOB_Y, 0] },
-  profil:    { p: [27, 3, 13], t: [0, MOB_Y, 0] },
-  mass:      { p: [3, 30, 15], t: [0, MOB_Y, 0] },
-  guss:      { p: [15, 8, 27], t: [0, MOB_Y, 0] },
-  uebergabe: { p: [-6, 10, 33], t: [0, MOB_Y, 0] },
+  hero:      { p: [5.5, 3.5, 26.5], t: [0, MOB_Y, 0] },
+  profil:    { p: [24, 2, 5],       t: [0, MOB_Y, 0] },
+  mass:      { p: [0, 2, 27],       t: [0, MOB_Y, 0] },
+  guss:      { p: [9.5, 1.5, 8.5], t: [4.6, MOB_Y, 0.4] },
+  uebergabe: { p: [-6, 4, 25],      t: [0, MOB_Y, 0] },
+};
+// Options-Blicke: die Wahl selbst lenkt die Kamera — Oberfläche fährt
+// auf den Makro-Detailbereich der Schiene, Profil und Schiene nah an
+// den Querschnitt. Beim Weiterscrollen übernimmt wieder das Kapitel.
+const OPTION_CAM = {
+  profil: { p: [17, 1.5, 5],     t: [0, MOB_Y, 0] },
+  dim:    { p: [17, 1.5, 5],     t: [0, MOB_Y, 0] },
+  size:   CHAPTER_CAM.mass,
+  mat:    { p: [9.5, 1.5, 8.5], t: [4.6, MOB_Y, 0.4] },
 };
 let activeChapter = 'hero';
 let camGoal = CHAPTER_CAM.hero;
@@ -1199,7 +1286,11 @@ function renderBrief() {
 function onChange(what) {
   renderProfiles(); renderTape(what === 'size'); renderProps(); renderMats();
   renderSatz(); renderLedger(); renderBrief();
-  if (what === 'mat') applyMaterial(); else rebuildRing();
+  if (what === 'mat') {
+    const need = !!MATERIALS[state.material].sandNormal;
+    if (ringGroup && ringGroup.userData.cast !== need) rebuildRing(); else applyMaterial();
+  } else rebuildRing();
+  if (OPTION_CAM[what]) { userHold = false; camGoal = OPTION_CAM[what]; }
   saveState();
 }
 
