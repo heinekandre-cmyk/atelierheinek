@@ -30,7 +30,12 @@
 <link href="/vendor/fonts/fonts.css" rel="stylesheet" />
 <style>
   /* ═══════════════════════════════════════════════════════════════════
-     DIE HELLE GALERIE — Werkbank v5 (Produktlicht nach Referenz)
+     DIE HELLE GALERIE — Werkbank v8 (Sweep-Übergänge · Münzfall · Export)
+     Neu in v8: Halbring öffnet/schließt sich als Bogen statt zu springen,
+     jeder Posen-Übergang entsteht aus der vorherigen Lage; die Übergabe
+     ist ein 5-Sekunden-Münzfall mit Bodenkontakt per Bounding-Box;
+     Werkstattzettel (PDF, jsPDF lazy) für Kunden, STEP/STL/OBJ nur mit
+     ?werkstatt in der URL.
      Darkroom-Editorial: Der Ring schwebt als Museumsstück im warmen
      Dunkel, Creme-Typografie ist der einzige Schmuck. Kein Panel, keine
      Karten, keine Schatten — Tiefe entsteht aus zwei Flächenstufen und
@@ -267,6 +272,21 @@
   }
   .btn-copy:hover { border-color: var(--cream); }
   .btn-copy.copied { color: var(--cream-dim); border-color: var(--hair); }
+  /* Der Werkstattzettel: leise neben dem einen Gold-Knopf — Geist, kein CTA */
+  .zettel { margin-top: 14px; }
+  .zettel .btn-copy { margin-left: 0; }
+  /* Werkstatt-Export (STEP/STL/OBJ): unsichtbar für Kunden, erscheint nur
+     mit ?werkstatt in der URL — Andres Weg vom Entwurf in die Fertigung. */
+  .export-leiste {
+    margin-top: 18px; padding-top: 14px; border-top: 1px dashed var(--hair);
+    display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap;
+  }
+  .export-leiste[hidden] { display: none; }
+  .export-leiste .label {
+    font-family: var(--font-mono); font-size: 9px; font-weight: 500;
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--cream-dim);
+  }
+  .export-leiste .btn-copy { margin-left: 0; }
   @keyframes rise { from { opacity: 0; transform: translateY(6px); } }
 
   .liefer { max-width: 460px; margin: 22px auto 0; font-size: 12.5px; line-height: 1.6; color: var(--drift); text-align: left; padding-top: 14px; border-top: 1px dashed var(--hair); }
@@ -503,6 +523,15 @@
     </div>
     <div class="k-steuer" style="text-align: center;">
       <button class="cta" id="btnInquiry">Anfrage senden</button>
+      <div class="zettel">
+        <button class="btn-copy" id="btnPDF">Werkstattzettel als PDF</button>
+      </div>
+      <div class="export-leiste" id="werkstattLeiste" hidden>
+        <span class="label">Werkstatt-Export</span>
+        <button class="btn-copy" id="btnSTEP">STEP</button>
+        <button class="btn-copy" id="btnSTL">STL</button>
+        <button class="btn-copy" id="btnOBJ">OBJ</button>
+      </div>
       <div class="fallback" id="inquiryFallback" hidden style="margin-left:auto;margin-right:auto;">
         <p>Es hat sich kein E-Mail-Programm ge&ouml;ffnet? Schick die Anfrage direkt an diese Adresse — den Text findest du mit einem Klick in der Zwischenablage.</p>
         <div class="row">
@@ -1133,33 +1162,56 @@ function updateReflection() {
 
 let ringGroup = null;
 let pulse = 0; // kleiner Maßstabs-Impuls beim Neuguss
-function rebuildRing() {
+// Sweep-Zustand: der Ring wird nicht mehr hart halbiert, sondern öffnet
+// und schließt sich als Bogen. arcCurrent hält den zuletzt gebauten
+// Öffnungswinkel — jeder Übergang startet exakt dort.
+const FULL_ARC = 2 * Math.PI;
+let arcCurrent = FULL_ARC, arcAnim = null;
+function tickArc() {
+  const t = Math.min(1, (performance.now() - arcAnim.t0) / 650);
+  const e = 1 - Math.pow(1 - t, 4); // Haus-Easing, ausklingend
+  const a = arcAnim.from + (arcAnim.to - arcAnim.from) * e;
+  if (t >= 1) { arcAnim = null; rebuildRing(); } // finaler Guss: Maßlinien, Gusskante
+  else rebuildRing(a, true);
+}
+function rebuildRing(arcOverride, light) {
+  // Lage des Vorgängers übernehmen — ein Neuguss darf die laufende
+  // Bewegung nicht zurücksetzen (Übergänge entstehen aus der vorherigen
+  // Position, nie aus dem Zielzustand).
+  const keepQ = ringGroup ? ringGroup.quaternion.clone() : poseQuat.clone();
+  const keepY = ringGroup ? ringGroup.position.y : poseY;
   if (ringGroup) {
     ringGroup.children.forEach(c => c.geometry && c.geometry.dispose());
     scene.remove(ringGroup); ringGroup = null;
   }
   const innerR = diameterForEU(state.euSize) / 2;
   const cast = !!MATERIALS[state.material].sandNormal;
+  const arc = arcOverride !== undefined ? arcOverride
+    : (arcAnim ? arcCurrent : (poseHalf ? Math.PI : FULL_ARC));
+  arcCurrent = arc;
+  const open = arc < FULL_ARC - 1e-4;
   const g = makeRingGeometries(PROFILES[state.profileKey], state.width, state.height, innerR,
-    (cast && !poseHalf) ? 0.05 : 0, poseHalf ? Math.PI : 2 * Math.PI);
+    (cast && !open && !light) ? 0.05 : 0, arc);
   const pair = MAT3D[state.material];
   ringGroup = new THREE.Group();
   ringGroup.add(new THREE.Mesh(g.outer, pair.outer), new THREE.Mesh(g.inner, pair.inner));
-  if (poseHalf) {
+  if (open) {
     ringGroup.add(new THREE.Mesh(
-      makeCaps(PROFILES[state.profileKey], state.width, state.height, innerR, Math.PI), capMat));
+      makeCaps(PROFILES[state.profileKey], state.width, state.height, innerR, arc), capMat));
+  }
+  if (!light && poseHalf && open) {
     ringGroup.add(buildCutLabels(state.width, state.height, innerR));
   }
   // Normierung: der Ring erscheint immer in derselben Bildgröße — sonst
   // sprengt EU 72 breit den Viewport, während EU 42 schmal verschwindet.
   const baseScale = 5.4 / (innerR + state.height);
   ringGroup.scale.setScalar(baseScale);
-  ringGroup.quaternion.copy(poseQuat); ringGroup.position.y = poseY;
+  ringGroup.quaternion.copy(keepQ); ringGroup.position.y = keepY;
   ringGroup.userData.baseScale = baseScale;
   ringGroup.userData.cast = cast;
   scene.add(ringGroup);
   rebuildReflection();
-  if (!reducedMotion) pulse = 1;
+  if (!light && !reducedMotion) pulse = 1;
 }
 function applyMaterial() {
   if (!ringGroup) return;
@@ -1172,15 +1224,22 @@ function applyMaterial() {
 // Klick einen kompletten Neuguss aus — nur der letzte Stand nach kurzer
 // Ruhe. Zahlen, Satz und Ledger bleiben sofort aktuell; nur die 3D-Geo-
 // metrie sammelt sich, bis die Hand kurz stillhält.
-let rebuildTimer = null;
+let rebuildTimer = null, rebuildPending = false;
 function scheduleRebuild() {
   clearTimeout(rebuildTimer);
-  rebuildTimer = setTimeout(rebuildRing, 90);
+  rebuildPending = true;
+  rebuildTimer = setTimeout(() => { rebuildPending = false; rebuildRing(); }, 90);
+}
+function flushRebuild() {
+  if (arcAnim) { arcAnim = null; }
+  if (rebuildPending) { clearTimeout(rebuildTimer); rebuildPending = false; }
+  rebuildRing();
 }
 
 let raf = null;
 function loop() {
   raf = requestAnimationFrame(loop);
+  if (arcAnim && ringGroup) tickArc();
   if (dropAnim && ringGroup) tickDrop();
   camTick();
   controls.update();
@@ -1234,17 +1293,69 @@ function applyPoseGoal(id) {
   const p = POSES[id] || POSES.hero;
   poseQuat.setFromEuler(new THREE.Euler(p.rx, 0, p.rz));
   poseY = p.y;
-  if (p.half !== poseHalf) { poseHalf = p.half; rebuildRing(); }
-  if (id === 'uebergabe' && !reducedMotion) dropAnim = { t0: performance.now() };
+  if (p.half !== poseHalf) {
+    poseHalf = p.half;
+    // Kein harter Schnitt mehr: der Ring öffnet/schließt sich als Bogen —
+    // der Sweep startet immer beim aktuellen Öffnungswinkel, egal wie
+    // schnell jemand zwischen den Kapiteln springt.
+    if (reducedMotion) { arcAnim = null; rebuildRing(); }
+    else arcAnim = { from: arcCurrent, to: p.half ? Math.PI : FULL_ARC, t0: performance.now() };
+  }
+  if (id === 'uebergabe' && !reducedMotion) startDrop();
   else dropAnim = null;
 }
+
+// ── Der Münzfall ──────────────────────────────────────────────────────
+// Physikalisch motiviert wie eine Münze, die man auf den Tisch dreht:
+// der Ring kippt aus seiner AKTUELLEN Lage auf die Kante, präzediert,
+// und je flacher er wird, desto schneller taumelt er (Euler-Scheibe:
+// Wackelfrequenz ~ 1/√Neigung), bis er satt in der Ruhelage liegt.
+// Die Höhe wird nicht animiert, sondern gemessen: der Ring bleibt in
+// jedem Frame exakt in Bodenkontakt (Bounding-Box gegen die Ruhelage).
+const DROP_MS = 5000;
+const _dropBox = new THREE.Box3();
+const _qWob = new THREE.Quaternion(), _qTmp = new THREE.Quaternion();
+const _axY = new THREE.Vector3(0, 1, 0), _axX = new THREE.Vector3(1, 0, 0);
+function startDrop() {
+  if (!ringGroup) { dropAnim = null; return; }
+  // Bodenhöhe der flachen Ruhelage einmalig messen
+  const q0 = ringGroup.quaternion.clone();
+  const y0 = ringGroup.position.y;
+  ringGroup.quaternion.set(0, 0, 0, 1); ringGroup.position.y = 0;
+  ringGroup.updateMatrixWorld(true);
+  _dropBox.setFromObject(ringGroup);
+  const floor = POSES.uebergabe.y + _dropBox.min.y;
+  ringGroup.quaternion.copy(q0); ringGroup.position.y = y0;
+  dropAnim = { t0: performance.now(), last: performance.now(), q0, floor, phi: 0, psi: 0 };
+}
 function tickDrop() {
-  const t = Math.min(1, (performance.now() - dropAnim.t0) / 2200);
-  const p = 1 - Math.pow(1 - t, 3);
-  const spin = 6 * Math.PI * (t * (2 - t));
-  ringGroup.rotation.set(-Math.PI / 2 * (1 - p), spin, Math.sin(t * 34) * Math.pow(1 - t, 3) * 0.18);
-  ringGroup.position.y = POSES.uebergabe.y * p;
-  if (t >= 1) { poseQuat.copy(ringGroup.quaternion); dropAnim = null; }
+  const now = performance.now();
+  const t = Math.min(1, (now - dropAnim.t0) / DROP_MS);
+  const dt = Math.min(0.05, (now - dropAnim.last) / 1000);
+  dropAnim.last = now;
+  // Neigung zur Kante: anfangs träge, am Ende der schnelle Kollaps
+  const theta = (Math.PI / 2) * (1 - Math.pow(t, 2.4));
+  // Präzession beschleunigt, je flacher der Ring liegt
+  const omega = 3.0 + 4.2 / Math.sqrt(Math.max(theta, 0.02));
+  dropAnim.phi += omega * dt;
+  dropAnim.psi += omega * dt * 0.12; // leises Abrollen um die eigene Achse
+  // Taumel-Quaternion: Gieren · Kippen · Rollen
+  _qWob.setFromAxisAngle(_axY, dropAnim.phi);
+  _qTmp.setFromAxisAngle(_axX, -theta); _qWob.multiply(_qTmp);
+  _qTmp.setFromAxisAngle(_axY, dropAnim.psi); _qWob.multiply(_qTmp);
+  // Einstieg: die ersten 0,6 s aus der vorherigen Lage ins Taumeln blenden
+  const blend = Math.min(1, (t * DROP_MS) / 600);
+  const eb = blend * blend * (3 - 2 * blend);
+  ringGroup.quaternion.copy(dropAnim.q0).slerp(_qWob, eb);
+  // Höhe: immer exakt Bodenkontakt
+  ringGroup.position.y = 0;
+  ringGroup.updateMatrixWorld(true);
+  _dropBox.setFromObject(ringGroup);
+  ringGroup.position.y = dropAnim.floor - _dropBox.min.y;
+  if (t >= 1) {
+    poseQuat.copy(ringGroup.quaternion); poseY = ringGroup.position.y;
+    dropAnim = null;
+  }
 }
 // Options-Blicke: die Wahl selbst lenkt die Kamera — Oberfläche fährt
 // auf den Makro-Detailbereich der Schiene, Profil und Schiene nah an
@@ -1490,6 +1601,443 @@ function toast(msg) {
   const t = $('toast'); t.textContent = msg; t.classList.add('show');
   clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
 }
+
+
+// ═══════════════════════════════════════════════════════════════════════
+// EXPORT & WERKSTATTZETTEL — portiert aus v2, an die v7-Architektur
+// angepasst. Für Kunden sichtbar: der Werkstattzettel als PDF.
+// Für die Werkstatt (?werkstatt in der URL): STEP / STL / OBJ —
+// derselbe Entwurf, den der Kunde sieht, direkt in die Fertigung.
+// ═══════════════════════════════════════════════════════════════════════
+function verfahrenText() {
+  return (state.sepia && MATERIALS[state.material].sandNormal)
+    ? 'Sepiaguss — auf Anfrage, keine zwei Güsse sind gleich'
+    : 'Delft-Sandguss, handgegossen';
+}
+function serialText() { return sandformNr().replace('Nr. ', '').replace('\u00B7', ''); }
+function buildFilename(ext) {
+  const p = PROFILES[state.profileKey];
+  return `AtelierHeinek_${p.letter}_${p.label}_${state.width.toFixed(1).replace('.','_')}x${state.height.toFixed(1).replace('.','_')}_EU${state.euSize}_${state.material.replace(/-/g,'_')}.${ext}`;
+}
+function downloadBlob(content, mime, ext) {
+  const blob = new Blob([content], { type: mime }), url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = buildFilename(ext);
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
+// ── Netz für STL/OBJ: immer der VOLLE Ring, unabhängig davon, ob die
+//    Bühne gerade den Halbring oder einen Sweep zeigt ──────────────────
+function getRingVertices() {
+  const profile = profilePoints(PROFILES[state.profileKey], state.width, state.height);
+  const innerR = diameterForEU(state.euSize) / 2, N = 256, P = profile.length;
+  const verts = [];
+  for (let i = 0; i < N; i++) {
+    const a = (i / N) * 2 * Math.PI, ca = Math.cos(a), sa = Math.sin(a);
+    for (let j = 0; j < P; j++) {
+      const u = profile[j][0], v = profile[j][1], r = innerR + v;
+      verts.push({ x: r * ca, y: u, z: r * sa });
+    }
+  }
+  return { verts, N, P };
+}
+function getTriangles() {
+  const { verts, N, P } = getRingVertices(); const tris = [];
+  for (let i = 0; i < N; i++) {
+    const i2 = (i + 1) % N;
+    for (let j = 0; j < P; j++) {
+      const j2 = (j + 1) % P;
+      const a = verts[i * P + j], b = verts[i2 * P + j], c = verts[i2 * P + j2], d = verts[i * P + j2];
+      tris.push([a, b, c]); tris.push([a, c, d]);
+    }
+  }
+  return tris;
+}
+
+// STEP-Real: fängt NaN/Infinity ab, liefert IMMER einen Dezimalpunkt.
+function stepNum(x) {
+  if (!Number.isFinite(x)) throw new Error('Nicht-endliche Koordinate berechnet');
+  if (Math.abs(x) < 1e-9) x = 0;
+  let s = x.toFixed(6).replace(/0+$/, '');
+  if (s.endsWith('.')) s += '0';
+  return s;
+}
+
+function buildAnalyticStep() {
+  const profileDef = PROFILES[state.profileKey];
+  const mat        = MATERIALS[state.material];
+  const innerR     = diameterForEU(state.euSize) / 2;
+
+  // 1. WÄCHTER: Duplikate verschweißen
+  const prof = dedupeContour(profilePoints(profileDef, state.width, state.height), 1e-4);
+  // Wicklung normalisieren: erzwingt dieselbe Orientierung, die die .T./.F.-
+  // Konvention unten annimmt — sonst inside-out Solid bei umgekehrt gewickelten Profilen.
+  let _sa = 0;
+  for (let j = 0; j < prof.length; j++) {
+    const a = prof[j], b = prof[(j + 1) % prof.length];
+    _sa += a[0] * b[1] - b[0] * a[1];
+  }
+  if (_sa < 0) prof.reverse();
+  const P = prof.length;
+  if (P < 3) throw new Error('Profil zu degeneriert (zu wenige Punkte)');
+
+  const R = prof.map(p => innerR + p[1]); // Radius je Punkt
+  const Y = prof.map(p => p[0]);          // axiale Lage je Punkt
+
+  // 2. WÄCHTER: physikalische Plausibilität
+  if (!(innerR > 0.1)) throw new Error('Innenradius ungültig');
+  if (R.some(r => !(r > 1e-4))) throw new Error('Radius wird null oder negativ');
+  const maxV = Math.max(...prof.map(p => p[1]));
+  if (maxV > innerR + 1e-6)
+    throw new Error('Profilhöhe (' + maxV.toFixed(2) + ' mm) übersteigt Innenradius (' + innerR.toFixed(2) + ' mm)');
+
+  // 3. STEP-Generator
+  const lines = [];
+  let id = 0;
+  const ref = n => '#' + n;
+  const add = s => { lines.push('#' + (++id) + ' = ' + s + ';'); return id; };
+
+  const now   = new Date().toISOString();
+  const fname = buildFilename('step');
+  const desc  = 'Atelier Heinek ' + profileDef.label + ' ' + state.width.toFixed(2) + 'x' + state.height.toFixed(2) + 'mm EU' + state.euSize + ' ' + mat.groupLabel + ' ' + mat.label;
+  const header = [
+    'ISO-10303-21;', 'HEADER;',
+    "FILE_DESCRIPTION(('" + desc + "'),'2;1');",
+    "FILE_NAME('" + fname + "','" + now + "',('Atelier Heinek'),(''),'Ring Konfigurator','','');",
+    "FILE_SCHEMA(('AUTOMOTIVE_DESIGN { 1 0 10303 214 1 1 1 1 }'));",
+    'ENDSEC;', 'DATA;'
+  ];
+
+  const appCtx = add("APPLICATION_CONTEXT('core data for automotive mechanical design processes')");
+  add("APPLICATION_PROTOCOL_DEFINITION('international standard','automotive_design',2000," + ref(appCtx) + ")");
+  // Einheiten: Millimeter (SI_UNIT .MILLI. .METRE.) — exakt wie von VISI/OCC erwartet.
+  const lenU = add('( LENGTH_UNIT() NAMED_UNIT(*) SI_UNIT(.MILLI.,.METRE.) )');
+  const angU = add('( NAMED_UNIT(*) PLANE_ANGLE_UNIT() SI_UNIT($,.RADIAN.) )');
+  const slU  = add('( NAMED_UNIT(*) SI_UNIT($,.STERADIAN.) SOLID_ANGLE_UNIT() )');
+  const unc  = add("UNCERTAINTY_MEASURE_WITH_UNIT(LENGTH_MEASURE(1.0E-05)," + ref(lenU) + ",'distance_accuracy_value','confusion accuracy')");
+  const ctx  = add("( GEOMETRIC_REPRESENTATION_CONTEXT(3) GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT((" + ref(unc) + ")) GLOBAL_UNIT_ASSIGNED_CONTEXT((" + ref(lenU) + "," + ref(angU) + "," + ref(slU) + ")) REPRESENTATION_CONTEXT('Context #1','3D Context with UNIT and UNCERTAINTY') )");
+
+  const dirY    = add("DIRECTION('',(0.,1.,0.))");
+  const dirYneg = add("DIRECTION('',(0.,-1.,0.))");
+  const dirX    = add("DIRECTION('',(1.,0.,0.))");
+
+  // Vertices + volle Begrenzungskreise je Profilpunkt (Meridian bei phi=0)
+  const vtx = [], circ = [];
+  for (let j = 0; j < P; j++) {
+    const vp = add("CARTESIAN_POINT('',(" + stepNum(R[j]) + "," + stepNum(Y[j]) + ",0.))");
+    vtx.push(add("VERTEX_POINT(''," + ref(vp) + ")"));
+  }
+  for (let j = 0; j < P; j++) {
+    const c  = add("CARTESIAN_POINT('',(0.," + stepNum(Y[j]) + ",0.))");
+    const ax = add("AXIS2_PLACEMENT_3D(''," + ref(c) + "," + ref(dirY) + "," + ref(dirX) + ")");
+    const cc = add("CIRCLE(''," + ref(ax) + "," + stepNum(R[j]) + ")");
+    circ.push(add("EDGE_CURVE(''," + ref(vtx[j]) + "," + ref(vtx[j]) + "," + ref(cc) + ",.T.)"));
+  }
+
+  // Nahtkanten NUR für nicht-ebene Bänder (Streifen-Patches)
+  const isPlane = [], seam = [];
+  for (let j = 0; j < P; j++) {
+    const j2 = (j + 1) % P;
+    // Nahezu senkrecht zur Achse → ebener Kreisring statt Quasi-Kegel.
+    // Defensive Schwelle: verhindert bei extremem Breiten/Höhen-Verhältnis einen
+    // entarteten Kegel-Halbwinkel nahe pi/2 (den strenge Kernel verwerfen).
+    isPlane.push(Math.abs(Y[j2] - Y[j]) < 5e-4);
+    if (!isPlane[j]) {
+      const dx = R[j2] - R[j], dy = Y[j2] - Y[j], dl = Math.hypot(dx, dy) || 1;
+      const d   = add("DIRECTION('',(" + stepNum(dx / dl) + "," + stepNum(dy / dl) + ",0.))");
+      const vec = add("VECTOR(''," + ref(d) + ",1.0)");
+      const vp  = add("CARTESIAN_POINT('',(" + stepNum(R[j]) + "," + stepNum(Y[j]) + ",0.))");
+      const ln  = add("LINE(''," + ref(vp) + "," + ref(vec) + ")");
+      seam.push(add("EDGE_CURVE(''," + ref(vtx[j]) + "," + ref(vtx[j2]) + "," + ref(ln) + ",.T.)"));
+    } else {
+      seam.push(null);
+    }
+  }
+
+  // Manifold-Konvention für alle Bänder: unteres Kreis circ[j] mit .T.,
+  // oberes circ[j2] mit .F. → jede Kreiskante genau zweimal gegenläufig.
+  const faces = [];
+  for (let j = 0; j < P; j++) {
+    const j2 = (j + 1) % P, r0 = R[j], r1 = R[j2], y0 = Y[j], y1 = Y[j2];
+
+    if (isPlane[j]) {
+      // Ebene Kreisring-Fläche: Außenkreis = FACE_OUTER_BOUND, Innenkreis = Loch.
+      // (Naht-Schleife über zwei konzentrische Kreise wäre auf einer Ebene
+      //  mehrdeutig — der Kernel verwirft sie. Außen/Loch ist eindeutig.)
+      const loc = add("CARTESIAN_POINT('',(0.," + stepNum(y0) + ",0.))");
+      const pn  = (r1 >= r0) ? dirY : dirYneg;
+      const ax  = add("AXIS2_PLACEMENT_3D(''," + ref(loc) + "," + ref(pn) + "," + ref(dirX) + ")");
+      const surf = add("PLANE(''," + ref(ax) + ")");
+      const oeJ  = add("ORIENTED_EDGE('',*,*," + ref(circ[j])  + ",.T.)");
+      const oeJ2 = add("ORIENTED_EDGE('',*,*," + ref(circ[j2]) + ",.F.)");
+      const loopJ  = add("EDGE_LOOP('',(" + ref(oeJ)  + "))");
+      const loopJ2 = add("EDGE_LOOP('',(" + ref(oeJ2) + "))");
+      let outerB, innerB;
+      if (r0 >= r1) { outerB = add("FACE_OUTER_BOUND('',"  + ref(loopJ)  + ",.T.)");
+                      innerB = add("FACE_BOUND('',"        + ref(loopJ2) + ",.T.)"); }
+      else          { outerB = add("FACE_OUTER_BOUND('',"  + ref(loopJ2) + ",.T.)");
+                      innerB = add("FACE_BOUND('',"        + ref(loopJ)  + ",.T.)"); }
+      faces.push(add("ADVANCED_FACE('',(" + ref(outerB) + "," + ref(innerB) + ")," + ref(surf) + ",.T.)"));
+
+    } else {
+      let surf;
+      if (Math.abs(r1 - r0) < 1e-7) {
+        // konstanter Radius → Zylindermantel (z. B. Bohrung)
+        const loc = add("CARTESIAN_POINT('',(0.," + stepNum(y0) + ",0.))");
+        const ax  = add("AXIS2_PLACEMENT_3D(''," + ref(loc) + "," + ref(dirY) + "," + ref(dirX) + ")");
+        surf = add("CYLINDRICAL_SURFACE(''," + ref(ax) + "," + stepNum(r0) + ")");
+      } else {
+        // Schräge → Kegel. Halbwinkel MUSS in (0, pi/2): Ursprung ans Ende mit
+        // kleinerem Radius, Achse zeigt zum größeren Radius.
+        let rA, yA, rB, yB;
+        if (r0 <= r1) { rA = r0; yA = y0; rB = r1; yB = y1; }
+        else          { rA = r1; yA = y1; rB = r0; yB = y0; }
+        const semi = Math.atan(Math.abs(rB - rA) / Math.abs(yB - yA));
+        const loc  = add("CARTESIAN_POINT('',(0.," + stepNum(yA) + ",0.))");
+        const ax   = add("AXIS2_PLACEMENT_3D(''," + ref(loc) + "," + ref((yB > yA) ? dirY : dirYneg) + "," + ref(dirX) + ")");
+        surf = add("CONICAL_SURFACE(''," + ref(ax) + "," + stepNum(rA) + "," + stepNum(semi) + ")");
+      }
+      // Genähte Randschleife: Kreis unten(.T.) → Naht hoch(.T.) → Kreis oben(.F.) → Naht runter(.F.)
+      const oeCb = add("ORIENTED_EDGE('',*,*," + ref(circ[j])  + ",.T.)");
+      const oeS1 = add("ORIENTED_EDGE('',*,*," + ref(seam[j])  + ",.T.)");
+      const oeCt = add("ORIENTED_EDGE('',*,*," + ref(circ[j2]) + ",.F.)");
+      const oeS2 = add("ORIENTED_EDGE('',*,*," + ref(seam[j])  + ",.F.)");
+      const loop = add("EDGE_LOOP('',(" + ref(oeCb) + "," + ref(oeS1) + "," + ref(oeCt) + "," + ref(oeS2) + "))");
+      const fb   = add("FACE_OUTER_BOUND('',"  + ref(loop) + ",.T.)");
+      faces.push(add("ADVANCED_FACE('',(" + ref(fb) + ")," + ref(surf) + ",.T.)"));
+    }
+  }
+
+  // Geschlossene Hülle → Solid-B-Rep
+  const shell = add("CLOSED_SHELL('',(" + faces.map(ref).join(',') + "))");
+  const brep  = add("MANIFOLD_SOLID_BREP('Ring'," + ref(shell) + ")");
+
+  // Produkt-/Shape-Struktur (Standard-AP214-Hülle)
+  const o2 = add("CARTESIAN_POINT('',(0.,0.,0.))");
+  const z2 = add("DIRECTION('',(0.,0.,1.))");
+  const x2 = add("DIRECTION('',(1.,0.,0.))");
+  const ax2 = add("AXIS2_PLACEMENT_3D(''," + ref(o2) + "," + ref(z2) + "," + ref(x2) + ")");
+  const rep = add("ADVANCED_BREP_SHAPE_REPRESENTATION('',(" + ref(ax2) + "," + ref(brep) + ")," + ref(ctx) + ")");
+  const pc  = add("PRODUCT_CONTEXT(''," + ref(appCtx) + ",'mechanical')");
+  const prod = add("PRODUCT('Ring','Atelier Heinek Ring','',(" + ref(pc) + "))");
+  const pdf = add("PRODUCT_DEFINITION_FORMATION('',''," + ref(prod) + ")");
+  const pdc = add("PRODUCT_DEFINITION_CONTEXT('part definition'," + ref(appCtx) + ",'design')");
+  const pd  = add("PRODUCT_DEFINITION('design',''," + ref(pdf) + "," + ref(pdc) + ")");
+  const pds = add("PRODUCT_DEFINITION_SHAPE('',''," + ref(pd) + ")");
+  add("SHAPE_DEFINITION_REPRESENTATION(" + ref(pds) + "," + ref(rep) + ")");
+  // KRITISCH für Direkt-Kompatibilität: Ohne diese Produktkategorie erkennen
+  // strenge Importer kein gültiges Part und lehnen die Datei ab, obwohl die
+  // Geometrie einwandfrei ist — genau der Effekt, der den Umweg über VISI nötig
+  // machte. VISI und OpenCascade schreiben diese Entity beim Re-Export.
+  add("PRODUCT_RELATED_PRODUCT_CATEGORY('part',$,(" + ref(prod) + "))");
+
+  return header.join('\n') + '\n' + lines.join('\n') + '\nENDSEC;\nEND-ISO-10303-21;\n';
+}
+
+// ── Werkstatt-Modus: Export-Leiste nur mit ?werkstatt sichtbar ────────
+{
+  let werkstatt = false;
+  try { werkstatt = new URLSearchParams(location.search).has('werkstatt'); } catch (e) {}
+  if (werkstatt) $('werkstattLeiste').hidden = false;
+}
+$('btnSTL').addEventListener('click', () => {
+  const tris = getTriangles(), buf = new ArrayBuffer(84 + tris.length * 50), dv = new DataView(buf); let o = 0;
+  for (let i = 0; i < 80; i++) dv.setUint8(o++, 0); dv.setUint32(o, tris.length, true); o += 4;
+  for (const [a, b, c] of tris) {
+    const ux = b.x - a.x, uy = b.y - a.y, uz = b.z - a.z, vx = c.x - a.x, vy = c.y - a.y, vz = c.z - a.z;
+    let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx; const ln = Math.sqrt(nx * nx + ny * ny + nz * nz) || 1;
+    nx /= ln; ny /= ln; nz /= ln;
+    dv.setFloat32(o, nx, true); o += 4; dv.setFloat32(o, ny, true); o += 4; dv.setFloat32(o, nz, true); o += 4;
+    for (const v of [a, b, c]) { dv.setFloat32(o, v.x, true); o += 4; dv.setFloat32(o, v.y, true); o += 4; dv.setFloat32(o, v.z, true); o += 4; }
+    dv.setUint16(o, 0, true); o += 2;
+  }
+  downloadBlob(buf, 'model/stl', 'stl'); toast('STL exportiert');
+});
+$('btnOBJ').addEventListener('click', () => {
+  const { verts, N, P } = getRingVertices();
+  const lines = ['# Atelier Heinek Ring', `# ${buildFilename('obj')}`];
+  for (const v of verts) lines.push(`v ${v.x.toFixed(5)} ${v.y.toFixed(5)} ${v.z.toFixed(5)}`);
+  for (let i = 0; i < N; i++) {
+    const i2 = (i + 1) % N;
+    for (let j = 0; j < P; j++) {
+      const j2 = (j + 1) % P, a = i * P + j + 1, b = i2 * P + j + 1, c = i2 * P + j2 + 1, d = i * P + j2 + 1;
+      lines.push(`f ${a} ${b} ${c}`); lines.push(`f ${a} ${c} ${d}`);
+    }
+  }
+  downloadBlob(lines.join('\n'), 'text/plain', 'obj'); toast('OBJ exportiert');
+});
+$('btnSTEP').addEventListener('click', () => {
+  try {
+    downloadBlob(buildAnalyticStep(), 'application/step', 'step');
+    toast('STEP exportiert — analytische Patches');
+  } catch (err) {
+    toast('Export gestoppt: ' + err.message);
+    console.error('[STEP]', err);
+  }
+});
+
+// ── Werkstattzettel als PDF ───────────────────────────────────────────
+// Hochauflösender Screenshot des aktuellen Rings für das PDF.
+// WebGL-Fallstrick: ohne preserveDrawingBuffer ist der Canvas-Puffer nach
+// dem Compositing leer (→ schwarzes Bild). Lösung: unmittelbar vor
+// toDataURL ein frisches renderer.render() und SOFORT synchron auslesen.
+function settleRingForCapture() {
+  flushRebuild();                 // laufender Sweep / offener Neuguss → finaler Stand
+  pulse = 0;
+  if (ringGroup) ringGroup.scale.setScalar(ringGroup.userData.baseScale || 1);
+}
+function captureRingImage(px = 1200) {
+  settleRingForCapture();
+  const oldSize = new THREE.Vector2(); renderer.getSize(oldSize);
+  const oldPR = renderer.getPixelRatio();
+  const oldAspect = camera.aspect;
+  try {
+    renderer.setPixelRatio(1);
+    renderer.setSize(px, px, false);
+    camera.aspect = 1; camera.updateProjectionMatrix();
+    renderer.render(scene, camera);
+    return canvas.toDataURL('image/png');
+  } catch (e) {
+    console.error('[Capture]', e); return null;
+  } finally {
+    camera.aspect = oldAspect; camera.updateProjectionMatrix();
+    renderer.setPixelRatio(oldPR);
+    renderer.setSize(oldSize.x, oldSize.y, false);
+    renderer.render(scene, camera);
+  }
+}
+function generatePDF() {
+  const jsPDFns = window.jspdf || (window.jsPDF ? { jsPDF: window.jsPDF } : null);
+  if (!jsPDFns || !jsPDFns.jsPDF) return false;
+  const { jsPDF } = jsPDFns;
+  const p = PROFILES[state.profileKey];
+  const dia = diameterForEU(state.euSize);
+  const brief = ($('briefText').textContent || '').trim();
+  const ringImg = captureRingImage(1200);
+  let today;
+  try { today = new Date().toLocaleDateString('de-AT', { year: 'numeric', month: 'long', day: 'numeric' }); }
+  catch (e) { today = new Date().toISOString().slice(0, 10); }
+
+  const doc = new jsPDF({ unit: 'mm', format: 'a4', putOnlyUsedFonts: true });
+  const PW = 210, M = 22, RX = PW - M, RW = PW - 2 * M;
+  // Die helle Galerie auf Papier: Tinte, Drift, Haarlinie, Steinweiß, Gold.
+  const ink = [28, 25, 23], mut = [87, 83, 78], ln = [214, 211, 209], pbg = [247, 245, 242], gold = [161, 98, 7];
+  const rule = (yy, col, w) => { doc.setDrawColor(col[0], col[1], col[2]); doc.setLineWidth(w); doc.line(M, yy, RX, yy); };
+  let y = 26;
+
+  doc.setTextColor(...ink);
+  doc.setFont('times', 'italic'); doc.setFontSize(30); doc.text('AH', M, y);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(10.5);
+  doc.text('ATELIER HEINEK', M + 15, y - 4.5, { charSpace: 0.5 });
+  doc.setTextColor(...mut); doc.setFontSize(7);
+  doc.text('DORNBIRN, VORARLBERG \u00B7 925 SILBER', M + 15, y, { charSpace: 0.4 });
+  doc.setFontSize(7.5);
+  doc.text('WERKSTATTZETTEL \u00B7 ' + sandformNr().toUpperCase(), RX, y - 4.5, { align: 'right', charSpace: 0.4 });
+  doc.setFontSize(8); doc.text(today, RX, y, { align: 'right' });
+  y += 6; rule(y, ink, 0.4); y += 12;
+
+  doc.setTextColor(...ink); doc.setFont('times', 'italic'); doc.setFontSize(28);
+  doc.text('Dein Ring, festgehalten', M, y); y += 6.5;
+  doc.setFontSize(12.5); doc.setTextColor(...mut);
+  doc.text('Entwurfs- und Werkstattdaten aus der Werkbank', M, y); y += 8;
+
+  if (ringImg) {
+    const ph = 46, px2 = M + (RW - ph) / 2;
+    const top = y;
+    doc.setDrawColor(...ln); doc.setLineWidth(0.3);
+    doc.rect(px2 - 3.0, top - 3.0, ph + 6.0, ph + 6.0);
+    doc.setLineWidth(0.12);
+    doc.rect(px2 - 1.4, top - 1.4, ph + 2.8, ph + 2.8);
+    doc.addImage(ringImg, 'PNG', px2, top, ph, ph, undefined, 'FAST');
+    const cy = top + ph + 6;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(6.5); doc.setTextColor(...mut);
+    doc.text('KONFIGURIERTE ANSICHT', PW / 2, cy, { align: 'center', charSpace: 0.6 });
+    y = cy + 8.5;
+  }
+
+  const rows = [
+    ['SANDFORM', sandformNr() + ' — wird genau einmal gegossen'],
+    ['PROFIL', p.letter + '. ' + p.label],
+    ['MASSE (BREITE \u00D7 ST\u00C4RKE)', fmt(state.width) + ' \u00D7 ' + fmt(state.height) + ' mm'],
+    ['EU-GR\u00D6SSE', String(state.euSize)],
+    ['INNEN-DURCHMESSER', fmt(dia) + ' mm'],
+    ['INNENUMFANG', fmt(state.euSize, 1) + ' mm'],
+    ['GEWICHT CA.', fmt(silverGrams(), 1) + ' g'],
+    ['MATERIAL & OBERFL\u00C4CHE', matWort()],
+    ['VERFAHREN', verfahrenText()],
+    // jsPDF-Standardschriften können nur WinAnsi — '≈' (U+2248) zerstört die Zeile.
+    ['RICHTPREIS', 'ca. ' + estimatePrice(state.width, state.height) + ' \u20AC — unverbindlich']
+  ];
+  const rowH = 8.6;
+  rule(y, ln, 0.2);
+  rows.forEach(([k, v], i) => {
+    const yt = y + rowH / 2 + 1.4;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(...mut);
+    doc.text(k, M, yt, { charSpace: 0.3 });
+    doc.setFont('times', 'normal'); doc.setFontSize(12.5);
+    if (i === rows.length - 1) doc.setTextColor(...gold); else doc.setTextColor(...ink);
+    doc.text(v, RX, yt, { align: 'right' });
+    y += rowH; rule(y, ln, 0.2);
+  });
+  y += 9;
+
+  doc.setFont('times', 'italic'); doc.setFontSize(11);
+  const padX = 8, padY = 7, innerW = RW - padX * 2, lineH = 4.9;
+  const tail = 'Die Sandform wird genau einmal gegossen — danach zerschlage ich sie. Lieferzeit in der Regel drei bis vier Wochen; den Termin best\u00E4tige ich im Angebot. Kein zweites St\u00FCck gleicht diesem.';
+  const linesBrief = doc.splitTextToSize(brief, innerW);
+  const linesTail  = doc.splitTextToSize(tail, innerW);
+  const allLines = [linesBrief, linesTail];
+  const totalTextLines = allLines.reduce((s, a) => s + a.length, 0);
+  const boxH = padY + 6 + totalTextLines * lineH + (allLines.length - 1) * 2.0 + 10 + padY;
+  doc.setFillColor(...pbg); doc.rect(M, y, RW, boxH, 'F');
+  doc.setFillColor(...ink); doc.rect(M, y, 0.9, boxH, 'F');
+  let ty = y + padY + 3;
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(...mut);
+  doc.text('NOTIZ AUS DER WERKSTATT', M + padX, ty, { charSpace: 0.5 }); ty += 6;
+  doc.setTextColor(...ink);
+  allLines.forEach((arr, i) => {
+    doc.setFont('times', 'italic'); doc.setFontSize(11);
+    arr.forEach(line => { doc.text(line, M + padX, ty, { charSpace: 0 }); ty += lineH; });
+    if (i < allLines.length - 1) ty += 2.0;
+  });
+  ty += 3;
+  doc.setFont('times', 'italic'); doc.setFontSize(16); doc.text('Heinek', M + padX, ty);
+
+  let fy = 285;
+  rule(fy - 6, ink, 0.4);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(...mut);
+  doc.text('ATELIER HEINEK \u00B7 DORNBIRN, VORARLBERG \u00B7 925', M, fy, { charSpace: 0.3 });
+  doc.setFont('times', 'italic'); doc.setFontSize(11); doc.setTextColor(...ink);
+  doc.text('Aus dem Sand. In die Hand.', RX, fy, { align: 'right' });
+
+  doc.save('Atelier_Heinek_Werkstattzettel_' + serialText() + '.pdf');
+  return true;
+}
+// jsPDF erst bei Bedarf laden: selbst gehostet (DSGVO), lazy — kein Byte,
+// bis jemand wirklich ein PDF will.
+const JSPDF_URL = '/vendor/jspdf.umd.min.js';
+let _jsPDFPromise = null;
+function loadJsPDF() {
+  if (window.jspdf || window.jsPDF) return Promise.resolve(true);
+  if (_jsPDFPromise) return _jsPDFPromise;
+  _jsPDFPromise = new Promise((resolve) => {
+    const s = document.createElement('script');
+    s.src = JSPDF_URL;
+    s.onload  = () => resolve(true);
+    s.onerror = () => { _jsPDFPromise = null; resolve(false); };
+    document.head.appendChild(s);
+  });
+  return _jsPDFPromise;
+}
+$('btnPDF').addEventListener('click', async () => {
+  toast('PDF wird vorbereitet \u2026');
+  await loadJsPDF();
+  try {
+    if (generatePDF()) { toast('Werkstattzettel wird heruntergeladen'); return; }
+  } catch (err) { console.error('[PDF]', err); }
+  // Fallback: die Seite selbst ist druckbar (Print-Styles) — als PDF sichern.
+  toast('Druckdialog \u2014 dort \u201Eals PDF sichern\u201C w\u00E4hlen');
+  setTimeout(() => window.print(), 120);
+});
 
 // ── Start ─────────────────────────────────────────────────────────────
 renderProfiles(); renderTape(false); renderProps(); renderMats();
