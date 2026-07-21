@@ -374,6 +374,7 @@
   <ul>
     <li><a href="#profil" data-nav="profil">Der Schnitt</a></li>
     <li><a href="#mass" data-nav="mass">Das Ma&szlig;</a></li>
+    <li><a href="#schiene" data-nav="schiene">Die Schiene</a></li>
     <li><a href="#guss" data-nav="guss">Der Guss</a></li>
     <li><a href="#uebergabe" data-nav="uebergabe">&Uuml;bergabe</a></li>
   </ul>
@@ -420,7 +421,7 @@
 
   <section class="kapitel" id="mass">
     <div class="k-kopf">
-      <p class="k-label">ii <b>·</b> Gr&ouml;&szlig;e &amp; Schiene</p>
+      <p class="k-label">ii <b>·</b> Gr&ouml;&szlig;e</p>
       <h2>Das<br />Ma&szlig;.</h2>
     </div>
     <div class="k-seite">
@@ -435,10 +436,6 @@
       </div>
       <p class="mass-lese">Innen-&Oslash; <b id="leseDia">—</b> &nbsp;·&nbsp; Umfang <b id="leseUmfang">—</b></p>
       <p class="mass-hint" id="massHint" hidden>Breite Schienen tragen sich enger — eine Nummer gr&ouml;&szlig;er w&auml;hlen.</p>
-      <div class="pill-gruppe" style="margin-top: 30px;">
-        <span class="gruppen-label">Die Schiene</span>
-        <div class="pills" id="propPills" role="group" aria-label="Schienenmaß wählen"></div>
-      </div>
       <details class="mass-help">
         <summary>Wie messe ich richtig?</summary>
         <p>Am genauesten: einen vorhandenen Ring innen ausmessen — Innen-Durchmesser &times; &pi; = EU-Gr&ouml;&szlig;e. Ohne Ring: Papierstreifen um den Finger, Markierung, L&auml;nge in mm messen.</p>
@@ -446,9 +443,22 @@
     </div>
   </section>
 
+  <section class="kapitel" id="schiene">
+    <div class="k-kopf">
+      <p class="k-label">iii <b>·</b> Schiene</p>
+      <h2>Die<br />Schiene.</h2>
+    </div>
+    <div class="k-seite">
+      <p class="lese">Drei Stufen Breite. <span class="dim">Sandguss kann ab 1,5 mm Wandstärke — Sondermaße prüfe ich am Stück.</span></p>
+    </div>
+    <div class="k-steuer">
+      <div class="pills" id="propPills" role="group" aria-label="Schienenmaß wählen"></div>
+    </div>
+  </section>
+
   <section class="kapitel" id="guss">
     <div class="k-kopf">
-      <p class="k-label">iii <b>·</b> Oberfl&auml;che</p>
+      <p class="k-label">iv <b>·</b> Oberfl&auml;che</p>
       <h2>Der<br />Guss.</h2>
     </div>
     <div class="k-seite">
@@ -478,7 +488,7 @@
 
   <section class="kapitel" id="uebergabe">
     <div class="k-kopf">
-      <p class="k-label">iv <b>·</b> Auftrag</p>
+      <p class="k-label">v <b>·</b> Auftrag</p>
       <h2>Die<br />&Uuml;bergabe.</h2>
       <p class="satz" id="satz" aria-live="polite" style="margin-top: 22px;"></p>
       <dl class="ledger" id="ledger"></dl>
@@ -880,7 +890,7 @@ camera.position.set(5.5, 3.5, 26.5);
 const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true; controls.dampingFactor = 0.06;
 controls.enablePan = false;
-controls.minDistance = 12; controls.maxDistance = 60;
+controls.minDistance = 4; controls.maxDistance = 60;
 controls.autoRotate = false; controls.autoRotateSpeed = 1.1; // v4: Kapitel-Kamera führt
 controls.target.set(0, 0, 0);
 function fitStage() {
@@ -964,7 +974,7 @@ for (const [k, m] of Object.entries(MATERIALS)) {
 // Flächennormale (Bohrung = Normale zeigt zur Achse), analytisch glatte,
 // nahtlose Normalen aus der Profil-Tangente.
 function hash3(x, y, z) { const t = Math.sin(x * 12.9898 + y * 78.233 + z * 37.719) * 43758.5453; return t - Math.floor(t); }
-function makeRingGeometries(profileDef, w, h, innerR, displace = 0) {
+function makeRingGeometries(profileDef, w, h, innerR, displace = 0, arc = 2 * Math.PI) {
   const profile = profilePoints(profileDef, w, h);
   const N = 256, P = profile.length;
   let signedArea = 0;
@@ -1007,7 +1017,8 @@ function makeRingGeometries(profileDef, w, h, innerR, displace = 0) {
       idxMap.set(key, vc);
       return vc++;
     }
-    for (let i = 0; i < N; i++) for (let j = 0; j < P; j++) {
+    const NI = arc >= 2 * Math.PI - 1e-6 ? N : Math.max(2, Math.round(N * arc / (2 * Math.PI)));
+    for (let i = 0; i < NI; i++) for (let j = 0; j < P; j++) {
       if (segInner[j] !== useInner) continue;
       const a = vert(i, j), b = vert(i + 1, j), c = vert(i + 1, j + 1), d = vert(i, j + 1);
       indices.push(a, b, c, a, c, d);
@@ -1022,6 +1033,104 @@ function makeRingGeometries(profileDef, w, h, innerR, displace = 0) {
   return { outer: buildClosedGeo(false), inner: buildClosedGeo(true) };
 }
 
+// Schnittdeckel: das DXF-Profil als gefräste Fläche, Fächer vom Schwerpunkt
+function makeCaps(profileDef, w, h, innerR, arc) {
+  const profile = profilePoints(profileDef, w, h);
+  const P = profile.length;
+  let cu = 0, cv = 0;
+  for (const [u, v] of profile) { cu += u; cv += v; }
+  cu /= P; cv /= P;
+  const positions = [], normals = [];
+  for (const [a, flip] of [[0, false], [arc, true]]) {
+    const ca = Math.cos(a), sa = Math.sin(a);
+    const nx = flip ? -sa * -1 : -sa, nz = flip ? ca * -1 : ca; // tangential
+    const NX = flip ? sa : -sa, NZ = flip ? -ca : ca;
+    const pt = ([u, v]) => [(innerR + v) * ca, u, (innerR + v) * sa];
+    for (let j = 0; j < P; j++) {
+      const A = pt([cu, cv]), B = pt(profile[j]), C = pt(profile[(j + 1) % P]);
+      const tri = flip ? [A, C, B] : [A, B, C];
+      for (const p of tri) { positions.push(...p); normals.push(NX, 0, NZ); }
+    }
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geo.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
+  return geo;
+}
+const capMat = new THREE.MeshStandardMaterial({ color: 0xD8D6D3, metalness: 1.0, roughness: 0.32 });
+// ── Maßlinien auf der Schnittfläche ───────────────────────────────────
+// Nur bei halbiertem Ring sichtbar (Stufe "Der Schnitt"). Zwei Sprites
+// mit Mono-Beschriftung plus dünne Tick-Linien, in Ring-Lokalkoordinaten
+// gebaut — sie erben Pose und Skalierung automatisch als Kinder von
+// ringGroup, unabhängig davon wie der Ring gerade gedreht ist.
+function makeLabelSprite(text) {
+  const c = document.createElement('canvas'); c.width = 320; c.height = 96;
+  const ctx = c.getContext('2d');
+  ctx.font = "600 42px 'JetBrains Mono', monospace";
+  ctx.fillStyle = '#1C1917';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(text, 160, 48);
+  const tex = new THREE.CanvasTexture(c); tex.needsUpdate = true;
+  const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false });
+  const spr = new THREE.Sprite(mat);
+  spr.scale.set(2.6, 0.78, 1);
+  return spr;
+}
+function buildCutLabels(w, h, innerR) {
+  const g = new THREE.Group();
+  const ro = innerR + h + 0.6;
+  const tickMat = new THREE.LineBasicMaterial({ color: 0x292524 });
+  const seg = (pts) => new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), tickMat);
+  g.add(seg([new THREE.Vector3(ro, -w / 2, 0), new THREE.Vector3(ro, w / 2, 0)]));
+  g.add(seg([new THREE.Vector3(ro, -w / 2, 0), new THREE.Vector3(ro - 0.3, -w / 2, 0)]));
+  g.add(seg([new THREE.Vector3(ro, w / 2, 0), new THREE.Vector3(ro - 0.3, w / 2, 0)]));
+  const su = -w / 2 - 0.6;
+  g.add(seg([new THREE.Vector3(innerR, su, 0), new THREE.Vector3(innerR + h, su, 0)]));
+  g.add(seg([new THREE.Vector3(innerR, su, 0), new THREE.Vector3(innerR, su + 0.3, 0)]));
+  g.add(seg([new THREE.Vector3(innerR + h, su, 0), new THREE.Vector3(innerR + h, su + 0.3, 0)]));
+  const wLabel = makeLabelSprite(w.toFixed(1).replace('.', ',') + ' mm');
+  wLabel.position.set(ro + 1.0, 0, 0); g.add(wLabel);
+  const hLabel = makeLabelSprite(h.toFixed(1).replace('.', ',') + ' mm');
+  hLabel.position.set(innerR + h / 2, su - 1.4, 0); g.add(hLabel);
+  return g;
+}
+
+// ── Bodenspiegelung ────────────────────────────────────────────────────
+// Ein gespiegeltes Duplikat des Rings, dynamisch aus der aktuellen
+// Bounding-Box berechnet — funktioniert unabhängig davon, ob der Ring
+// liegt, steht oder halbiert ist, ohne Koordinaten pro Pose zu raten.
+const mirrorPivot = new THREE.Group();
+scene.add(mirrorPivot);
+const reflectBox = new THREE.Box3();
+let reflectionMeshes = null;
+function rebuildReflection() {
+  if (reflectionMeshes) {
+    mirrorPivot.remove(reflectionMeshes);
+    reflectionMeshes.traverse(o => { if (o.material) o.material.dispose(); });
+  }
+  reflectionMeshes = new THREE.Group();
+  for (const child of ringGroup.children) {
+    if (!child.isMesh) continue;
+    const m = child.material.clone();
+    m.transparent = true; m.opacity = 0.22; m.depthWrite = false;
+    m.roughness = Math.min(1, (m.roughness || 0.2) + 0.3);
+    m.envMapIntensity = (m.envMapIntensity || 1) * 0.5;
+    reflectionMeshes.add(new THREE.Mesh(child.geometry, m));
+  }
+  mirrorPivot.add(reflectionMeshes);
+}
+function updateReflection() {
+  if (!reflectionMeshes || !ringGroup) return;
+  ringGroup.updateMatrixWorld(true);
+  reflectBox.setFromObject(ringGroup);
+  const floorY = reflectBox.min.y;
+  mirrorPivot.position.set(0, floorY, 0);
+  mirrorPivot.scale.set(1, -1, 1);
+  reflectionMeshes.position.set(ringGroup.position.x, ringGroup.position.y - floorY, ringGroup.position.z);
+  reflectionMeshes.quaternion.copy(ringGroup.quaternion);
+  reflectionMeshes.scale.copy(ringGroup.scale);
+}
+
 let ringGroup = null;
 let pulse = 0; // kleiner Maßstabs-Impuls beim Neuguss
 function rebuildRing() {
@@ -1031,18 +1140,25 @@ function rebuildRing() {
   }
   const innerR = diameterForEU(state.euSize) / 2;
   const cast = !!MATERIALS[state.material].sandNormal;
-  const g = makeRingGeometries(PROFILES[state.profileKey], state.width, state.height, innerR, cast ? 0.05 : 0);
+  const g = makeRingGeometries(PROFILES[state.profileKey], state.width, state.height, innerR,
+    (cast && !poseHalf) ? 0.05 : 0, poseHalf ? Math.PI : 2 * Math.PI);
   const pair = MAT3D[state.material];
   ringGroup = new THREE.Group();
   ringGroup.add(new THREE.Mesh(g.outer, pair.outer), new THREE.Mesh(g.inner, pair.inner));
+  if (poseHalf) {
+    ringGroup.add(new THREE.Mesh(
+      makeCaps(PROFILES[state.profileKey], state.width, state.height, innerR, Math.PI), capMat));
+    ringGroup.add(buildCutLabels(state.width, state.height, innerR));
+  }
   // Normierung: der Ring erscheint immer in derselben Bildgröße — sonst
   // sprengt EU 72 breit den Viewport, während EU 42 schmal verschwindet.
   const baseScale = 5.4 / (innerR + state.height);
   ringGroup.scale.setScalar(baseScale);
-  ringGroup.rotation.x = -Math.PI / 2; // stehend, Front zur Kamera
+  ringGroup.quaternion.copy(poseQuat); ringGroup.position.y = poseY;
   ringGroup.userData.baseScale = baseScale;
   ringGroup.userData.cast = cast;
   scene.add(ringGroup);
+  rebuildReflection();
   if (!reducedMotion) pulse = 1;
 }
 function applyMaterial() {
@@ -1050,14 +1166,26 @@ function applyMaterial() {
   const pair = MAT3D[state.material];
   ringGroup.children[0].material = pair.outer;
   ringGroup.children[1].material = pair.inner;
+  rebuildReflection();
+}
+// Geometrie-Cache: wer schnell durchs Maßband fährt, löst nicht mehr pro
+// Klick einen kompletten Neuguss aus — nur der letzte Stand nach kurzer
+// Ruhe. Zahlen, Satz und Ledger bleiben sofort aktuell; nur die 3D-Geo-
+// metrie sammelt sich, bis die Hand kurz stillhält.
+let rebuildTimer = null;
+function scheduleRebuild() {
+  clearTimeout(rebuildTimer);
+  rebuildTimer = setTimeout(rebuildRing, 90);
 }
 
 let raf = null;
 function loop() {
   raf = requestAnimationFrame(loop);
+  if (dropAnim && ringGroup) tickDrop();
   camTick();
   controls.update();
   headlamp.position.copy(camera.position);
+  updateReflection();
   if (ringGroup && pulse > 0) {
     pulse = Math.max(0, pulse - 0.06);
     const s = 1 - 0.03 * Math.sin(pulse * Math.PI);
@@ -1084,20 +1212,48 @@ const isMobile = window.matchMedia('(max-width: 860px)').matches;
 // die Übergabe tritt einen Schritt zurück.
 const MOB_Y = isMobile ? -7 : 0;
 const CHAPTER_CAM = {
-  hero:      { p: [5.5, 3.5, 26.5], t: [0, MOB_Y, 0] },
-  profil:    { p: [24, 2, 5],       t: [0, MOB_Y, 0] },
-  mass:      { p: [0, 2, 27],       t: [0, MOB_Y, 0] },
-  guss:      { p: [9.5, 1.5, 8.5], t: [4.6, MOB_Y, 0.4] },
-  uebergabe: { p: [-6, 4, 25],      t: [0, MOB_Y, 0] },
+  hero:      { p: [0, 7, 24],      t: [0, -2.5 + MOB_Y, 0] },
+  profil:    { p: [0, 13, 17],     t: [0, -1 + MOB_Y, 0] },
+  mass:      { p: [0.5, 26, 2],    t: [0, -4.3 + MOB_Y, 0] },
+  schiene:   { p: [24, 1.5, 4],    t: [0, MOB_Y, 0] },
+  guss:      { p: [7.6, 0.9, 6.9], t: [4.95, MOB_Y, 0.65] },
+  uebergabe: { p: [-4, 10, 22],    t: [0, -3 + MOB_Y, 0] },
 };
+// Posen je Stufe: Orientierung, Ruhehöhe, Halb-/Vollring
+const POSES = {
+  hero:      { rx: -0.32 * Math.PI, rz: 0, y: -2.6, half: false },
+  profil:    { rx: -Math.PI / 2, rz: Math.PI / 2, y: 0, half: true },
+  mass:      { rx: 0, rz: 0, y: -4.27, half: false },
+  schiene:   { rx: -Math.PI / 2, rz: 0, y: 0, half: false },
+  guss:      { rx: -Math.PI / 2, rz: 0, y: 0, half: false },
+  uebergabe: { rx: 0, rz: 0, y: -4.27, half: false },
+};
+const poseQuat = new THREE.Quaternion().setFromEuler(new THREE.Euler(-0.32 * Math.PI, 0, 0));
+let poseY = -2.6, poseHalf = false, dropAnim = null;
+function applyPoseGoal(id) {
+  const p = POSES[id] || POSES.hero;
+  poseQuat.setFromEuler(new THREE.Euler(p.rx, 0, p.rz));
+  poseY = p.y;
+  if (p.half !== poseHalf) { poseHalf = p.half; rebuildRing(); }
+  if (id === 'uebergabe' && !reducedMotion) dropAnim = { t0: performance.now() };
+  else dropAnim = null;
+}
+function tickDrop() {
+  const t = Math.min(1, (performance.now() - dropAnim.t0) / 2200);
+  const p = 1 - Math.pow(1 - t, 3);
+  const spin = 6 * Math.PI * (t * (2 - t));
+  ringGroup.rotation.set(-Math.PI / 2 * (1 - p), spin, Math.sin(t * 34) * Math.pow(1 - t, 3) * 0.18);
+  ringGroup.position.y = POSES.uebergabe.y * p;
+  if (t >= 1) { poseQuat.copy(ringGroup.quaternion); dropAnim = null; }
+}
 // Options-Blicke: die Wahl selbst lenkt die Kamera — Oberfläche fährt
 // auf den Makro-Detailbereich der Schiene, Profil und Schiene nah an
 // den Querschnitt. Beim Weiterscrollen übernimmt wieder das Kapitel.
 const OPTION_CAM = {
-  profil: { p: [17, 1.5, 5],     t: [0, MOB_Y, 0] },
-  dim:    { p: [17, 1.5, 5],     t: [0, MOB_Y, 0] },
+  profil: CHAPTER_CAM.profil,
+  dim:    CHAPTER_CAM.schiene,
   size:   CHAPTER_CAM.mass,
-  mat:    { p: [9.5, 1.5, 8.5], t: [4.6, MOB_Y, 0.4] },
+  mat:    CHAPTER_CAM.guss,
 };
 let activeChapter = 'hero';
 let camGoal = CHAPTER_CAM.hero;
@@ -1105,6 +1261,11 @@ let userHold = false; // greift der Mensch ein, ruht die Choreografie
 controls.addEventListener('start', () => { userHold = true; });
 
 function camTick() {
+  if (ringGroup && !dropAnim) {
+    const k = reducedMotion ? 1 : 0.06;
+    ringGroup.quaternion.slerp(poseQuat, k);
+    ringGroup.position.y += (poseY - ringGroup.position.y) * k;
+  }
   if (userHold || !camGoal) return;
   const k = reducedMotion ? 1 : 0.045;
   camera.position.x += (camGoal.p[0] - camera.position.x) * k;
@@ -1126,6 +1287,7 @@ function camTick() {
       if (id !== activeChapter) {
         activeChapter = id; userHold = false;
         camGoal = CHAPTER_CAM[id] || CHAPTER_CAM.hero;
+        applyPoseGoal(id);
         document.querySelectorAll('.nav ul a').forEach(a =>
           a.setAttribute('aria-current', String(a.dataset.nav === id)));
       }
@@ -1288,8 +1450,8 @@ function onChange(what) {
   renderSatz(); renderLedger(); renderBrief();
   if (what === 'mat') {
     const need = !!MATERIALS[state.material].sandNormal;
-    if (ringGroup && ringGroup.userData.cast !== need) rebuildRing(); else applyMaterial();
-  } else rebuildRing();
+    if (ringGroup && ringGroup.userData.cast !== need) scheduleRebuild(); else applyMaterial();
+  } else scheduleRebuild();
   if (OPTION_CAM[what]) { userHold = false; camGoal = OPTION_CAM[what]; }
   saveState();
 }
@@ -1332,7 +1494,9 @@ function toast(msg) {
 // ── Start ─────────────────────────────────────────────────────────────
 renderProfiles(); renderTape(false); renderProps(); renderMats();
 renderSatz(); renderLedger(); renderBrief();
-rebuildRing(); loop();
+rebuildRing();
+ringGroup.quaternion.copy(poseQuat); ringGroup.position.y = poseY;
+loop();
 requestAnimationFrame(() => {
   document.getElementById('hero').classList.add('in');
   const active = document.querySelector('#tape button[aria-pressed="true"]');
