@@ -84,7 +84,7 @@
   .stage::after { content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 2;
     background: radial-gradient(ellipse at center, transparent 55%, rgba(60, 55, 45, 0.10) 100%); }
   .stage-grain { display: none; } /* Korn-Regel: Korn gehört der dunklen Welt */
-  #canvas { width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; -webkit-tap-highlight-color: transparent; }
+  #canvas { width: 100%; height: 100%; display: block; cursor: grab; touch-action: pan-y; -webkit-tap-highlight-color: transparent; }
   #canvas:active { cursor: grabbing; }
 
   /* ── Fixe Artefakte: Navigation, Serial, Preis ───────────────────── */
@@ -130,7 +130,11 @@
   .tool-btn.active { border-color: var(--cream); color: var(--cream); }
 
   /* ── Kapitel: volle Viewports über der Bühne ─────────────────────── */
-  main { position: relative; z-index: 10; }
+  /* BUGFIX v8.1: main lag vollflächig über dem Canvas und schluckte JEDE
+     Zeigereingabe — Drehen und Zoomen der Bühne waren unmöglich. Jetzt
+     lässt main Zeiger durch; nur die drei Inhaltsblöcke fangen sie. */
+  main { position: relative; z-index: 10; pointer-events: none; }
+  .k-kopf, .k-seite, .k-steuer, .fuss { pointer-events: auto; }
   .kapitel {
     position: relative;
     min-height: 100svh; display: grid; align-content: center;
@@ -919,9 +923,26 @@ camera.position.set(5.5, 3.5, 26.5);
 const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true; controls.dampingFactor = 0.06;
 controls.enablePan = false;
-controls.minDistance = 4; controls.maxDistance = 60;
+controls.enableZoom = true;
+controls.minDistance = 3; controls.maxDistance = 60;
 controls.autoRotate = false; controls.autoRotateSpeed = 1.1; // v4: Kapitel-Kamera führt
 controls.target.set(0, 0, 0);
+// ── Eingabe-Regie (v8.1) ──────────────────────────────────────────────
+// Die Werkbank ist ein Scroll-Dokument, die Bühne liegt dahinter. Beide
+// brauchen dieselben Gesten — die Aufteilung:
+//   · Rad ohne Modifier   → Dokument scrollt (Abfangen VOR OrbitControls,
+//                           sonst frisst preventDefault das Scrollen)
+//   · Ctrl/Cmd + Rad      → Bühne zoomt (Trackpad-Pinch sendet ctrlKey!)
+//   · 1 Finger vertikal   → Dokument scrollt (touch-action: pan-y)
+//   · 1 Finger quer       → Ring dreht
+//   · 2 Finger (Pinch)    → Bühne zoomt
+controls.touches.ONE = THREE.TOUCH.ROTATE;
+controls.touches.TWO = THREE.TOUCH.DOLLY_PAN;
+canvas.style.touchAction = 'pan-y'; // OrbitControls setzt 'none' — zurückholen
+canvas.title = 'Ziehen: drehen \u00B7 Strg/Cmd + Rad oder zwei Finger: zoomen';
+window.addEventListener('wheel', (e) => {
+  if (e.target === canvas && !e.ctrlKey && !e.metaKey) e.stopPropagation();
+}, { capture: true, passive: true });
 function fitStage() {
   const w = document.getElementById('stage').clientWidth || 1;
   const h = document.getElementById('stage').clientHeight || 1;
@@ -1167,12 +1188,49 @@ let pulse = 0; // kleiner Maßstabs-Impuls beim Neuguss
 // Öffnungswinkel — jeder Übergang startet exakt dort.
 const FULL_ARC = 2 * Math.PI;
 let arcCurrent = FULL_ARC, arcAnim = null;
+// Maßlinien tragen eigene Materialien und Canvas-Texturen — die müssen
+// beim Abriss mit, sonst leckt jeder Profil-Besuch GPU-Speicher.
+function disposeDeep(obj) {
+  obj.traverse(o => {
+    if (o.geometry) o.geometry.dispose();
+    if (o.material) { if (o.material.map) o.material.map.dispose(); o.material.dispose(); }
+  });
+}
 function tickArc() {
   const t = Math.min(1, (performance.now() - arcAnim.t0) / 650);
   const e = 1 - Math.pow(1 - t, 4); // Haus-Easing, ausklingend
   const a = arcAnim.from + (arcAnim.to - arcAnim.from) * e;
   if (t >= 1) { arcAnim = null; rebuildRing(); } // finaler Guss: Maßlinien, Gusskante
-  else rebuildRing(a, true);
+  else updateArcGeometry(a);
+}
+// Fastpath für den Sweep: KEIN Abriss der Gruppe, keine Material-Klone —
+// nur die Geometrien der bestehenden Meshes (und ihrer Spiegelbilder)
+// werden getauscht. Das hält 60/120 fps auch auf dem Telefon.
+function updateArcGeometry(arc) {
+  if (!ringGroup) { rebuildRing(arc, true); return; }
+  arcCurrent = arc;
+  const innerR = diameterForEU(state.euSize) / 2;
+  const open = arc < FULL_ARC - 1e-4;
+  const g = makeRingGeometries(PROFILES[state.profileKey], state.width, state.height, innerR, 0, arc);
+  const mo = ringGroup.children[0], mi = ringGroup.children[1];
+  mo.geometry.dispose(); mo.geometry = g.outer;
+  mi.geometry.dispose(); mi.geometry = g.inner;
+  const labels = ringGroup.children.find(c => c.isGroup);
+  if (labels) { ringGroup.remove(labels); disposeDeep(labels); }
+  let caps = ringGroup.children.find(c => c.isMesh && c.material === capMat);
+  if (open) {
+    const cg = makeCaps(PROFILES[state.profileKey], state.width, state.height, innerR, arc);
+    if (caps) { caps.geometry.dispose(); caps.geometry = cg; }
+    else ringGroup.add(new THREE.Mesh(cg, capMat));
+  } else if (caps) { ringGroup.remove(caps); caps.geometry.dispose(); }
+  syncReflectionGeometries();
+}
+function syncReflectionGeometries() {
+  const ringMeshes = ringGroup.children.filter(c => c.isMesh);
+  if (!reflectionMeshes || reflectionMeshes.children.length !== ringMeshes.length) {
+    rebuildReflection(); return;
+  }
+  ringMeshes.forEach((m, i) => { reflectionMeshes.children[i].geometry = m.geometry; });
 }
 function rebuildRing(arcOverride, light) {
   // Lage des Vorgängers übernehmen — ein Neuguss darf die laufende
@@ -1181,7 +1239,10 @@ function rebuildRing(arcOverride, light) {
   const keepQ = ringGroup ? ringGroup.quaternion.clone() : poseQuat.clone();
   const keepY = ringGroup ? ringGroup.position.y : poseY;
   if (ringGroup) {
-    ringGroup.children.forEach(c => c.geometry && c.geometry.dispose());
+    ringGroup.children.forEach(c => {
+      if (c.isGroup) disposeDeep(c);
+      else if (c.geometry) c.geometry.dispose();
+    });
     scene.remove(ringGroup); ringGroup = null;
   }
   const innerR = diameterForEU(state.euSize) / 2;
@@ -1211,6 +1272,9 @@ function rebuildRing(arcOverride, light) {
   ringGroup.userData.cast = cast;
   scene.add(ringGroup);
   rebuildReflection();
+  // Läuft gerade der Münzfall, ändert ein Neuguss (andere Maße) die
+  // Ruhelage — Bodenhöhe frisch messen, sonst landet der Ring daneben.
+  if (dropAnim) dropAnim.floor = measureFlatFloor();
   if (!light && !reducedMotion) pulse = 1;
 }
 function applyMaterial() {
@@ -1236,17 +1300,20 @@ function flushRebuild() {
   rebuildRing();
 }
 
-let raf = null;
+let raf = null, loopLast = performance.now();
 function loop() {
   raf = requestAnimationFrame(loop);
+  const now = performance.now();
+  const dt = Math.min(50, now - loopLast); // Tab-Rückkehr ohne Sprung
+  loopLast = now;
   if (arcAnim && ringGroup) tickArc();
   if (dropAnim && ringGroup) tickDrop();
-  camTick();
+  camTick(dt);
   controls.update();
   headlamp.position.copy(camera.position);
   updateReflection();
   if (ringGroup && pulse > 0) {
-    pulse = Math.max(0, pulse - 0.06);
+    pulse = Math.max(0, pulse - 0.0036 * dt); // ~0.06 je 60-Hz-Frame, auf jedem Display gleich schnell
     const s = 1 - 0.03 * Math.sin(pulse * Math.PI);
     ringGroup.scale.setScalar((ringGroup.userData.baseScale || 1) * s);
   }
@@ -1254,7 +1321,7 @@ function loop() {
 }
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) { cancelAnimationFrame(raf); raf = null; }
-  else if (!raf) loop();
+  else if (!raf) { loopLast = performance.now(); loop(); }
 });
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -1263,21 +1330,31 @@ document.addEventListener('visibilitychange', () => {
 const $ = (id) => document.getElementById(id);
 const fmt = (x, d = 2) => x.toFixed(d).replace('.', ',');
 const euro = (x) => '\u20AC ' + Math.round(x);
-const isMobile = window.matchMedia('(max-width: 860px)').matches;
+
 
 // ── Kapitel-Kamera: jeder Abschnitt hat seinen Blick ──────────────────
 // Der Schnitt zeigt die Silhouette von der Seite, das Maß schaut von
 // oben auf den Kreis, der Guss nimmt die klassische Dreiviertel-Ansicht,
 // die Übergabe tritt einen Schritt zurück.
-const MOB_Y = isMobile ? -7 : 0;
+// BUGFIX v8.1: Der Mobil-Offset war einmalig beim Laden eingebrannt —
+// Gerät drehen (Hoch-/Querformat) ließ die Kamera falsch rahmen, bis man
+// neu lud. Jetzt wird der Offset bei jedem Wechsel nachgezogen.
 const CHAPTER_CAM = {
-  hero:      { p: [0, 7, 24],      t: [0, -2.5 + MOB_Y, 0] },
-  profil:    { p: [0, 13, 17],     t: [0, -1 + MOB_Y, 0] },
-  mass:      { p: [0.5, 26, 2],    t: [0, -4.3 + MOB_Y, 0] },
-  schiene:   { p: [24, 1.5, 4],    t: [0, MOB_Y, 0] },
-  guss:      { p: [7.6, 0.9, 6.9], t: [4.95, MOB_Y, 0.65] },
-  uebergabe: { p: [-4, 10, 22],    t: [0, -3 + MOB_Y, 0] },
+  hero:      { p: [0, 7, 24],      t: [0, -2.5, 0] },
+  profil:    { p: [0, 13, 17],     t: [0, -1, 0] },
+  mass:      { p: [0.5, 26, 2],    t: [0, -4.3, 0] },
+  schiene:   { p: [24, 1.5, 4],    t: [0, 0, 0] },
+  guss:      { p: [7.6, 0.9, 6.9], t: [4.95, 0, 0.65] },
+  uebergabe: { p: [-4, 10, 22],    t: [0, -3, 0] },
 };
+for (const c of Object.values(CHAPTER_CAM)) c.baseT1 = c.t[1];
+const mobileMQ = window.matchMedia('(max-width: 860px)');
+function applyViewportOffsets() {
+  const off = mobileMQ.matches ? -7 : 0;
+  for (const c of Object.values(CHAPTER_CAM)) c.t[1] = c.baseT1 + off;
+}
+applyViewportOffsets();
+mobileMQ.addEventListener('change', applyViewportOffsets);
 // Posen je Stufe: Orientierung, Ruhehöhe, Halb-/Vollring
 const POSES = {
   hero:      { rx: -0.32 * Math.PI, rz: 0, y: -2.6, half: false },
@@ -1316,17 +1393,20 @@ const DROP_MS = 5000;
 const _dropBox = new THREE.Box3();
 const _qWob = new THREE.Quaternion(), _qTmp = new THREE.Quaternion();
 const _axY = new THREE.Vector3(0, 1, 0), _axX = new THREE.Vector3(1, 0, 0);
-function startDrop() {
-  if (!ringGroup) { dropAnim = null; return; }
-  // Bodenhöhe der flachen Ruhelage einmalig messen
-  const q0 = ringGroup.quaternion.clone();
-  const y0 = ringGroup.position.y;
+function measureFlatFloor() {
+  // Bodenhöhe der flachen Ruhelage: einmal messen statt raten
+  const q = ringGroup.quaternion.clone(), y = ringGroup.position.y;
   ringGroup.quaternion.set(0, 0, 0, 1); ringGroup.position.y = 0;
   ringGroup.updateMatrixWorld(true);
   _dropBox.setFromObject(ringGroup);
   const floor = POSES.uebergabe.y + _dropBox.min.y;
-  ringGroup.quaternion.copy(q0); ringGroup.position.y = y0;
-  dropAnim = { t0: performance.now(), last: performance.now(), q0, floor, phi: 0, psi: 0 };
+  ringGroup.quaternion.copy(q); ringGroup.position.y = y;
+  return floor;
+}
+function startDrop() {
+  if (!ringGroup) { dropAnim = null; return; }
+  dropAnim = { t0: performance.now(), last: performance.now(),
+    q0: ringGroup.quaternion.clone(), floor: measureFlatFloor(), phi: 0, psi: 0 };
 }
 function tickDrop() {
   const now = performance.now();
@@ -1371,14 +1451,17 @@ let camGoal = CHAPTER_CAM.hero;
 let userHold = false; // greift der Mensch ein, ruht die Choreografie
 controls.addEventListener('start', () => { userHold = true; });
 
-function camTick() {
+function camTick(dt = 16.7) {
+  // Dämpfung bildratenunabhängig: derselbe Weg pro Millisekunde, ob das
+  // Display 60, 90 oder 120 Hz fährt (vorher: 120 Hz = doppeltes Tempo).
+  const damp = (base) => reducedMotion ? 1 : 1 - Math.pow(1 - base, dt / 16.7);
   if (ringGroup && !dropAnim) {
-    const k = reducedMotion ? 1 : 0.06;
+    const k = damp(0.06);
     ringGroup.quaternion.slerp(poseQuat, k);
     ringGroup.position.y += (poseY - ringGroup.position.y) * k;
   }
   if (userHold || !camGoal) return;
-  const k = reducedMotion ? 1 : 0.045;
+  const k = damp(0.045);
   camera.position.x += (camGoal.p[0] - camera.position.x) * k;
   camera.position.y += (camGoal.p[1] - camera.position.y) * k;
   camera.position.z += (camGoal.p[2] - camera.position.z) * k;
