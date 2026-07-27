@@ -1275,7 +1275,7 @@ function rebuildRing(arcOverride, light) {
   // Läuft gerade der Münzfall, ändert ein Neuguss (andere Maße) die
   // Ruhelage — Bodenhöhe frisch messen, sonst landet der Ring daneben.
   if (dropAnim) dropAnim.floor = measureFlatFloor();
-  if (!light && !reducedMotion) pulse = 1;
+  if (!light && !reducedMotion && !suppressPulse) pulse = 1;
 }
 function applyMaterial() {
   if (!ringGroup) return;
@@ -1308,6 +1308,7 @@ function loop() {
   loopLast = now;
   if (arcAnim && ringGroup) tickArc();
   if (dropAnim && ringGroup) tickDrop();
+  scrollDrive();
   camTick(dt);
   controls.update();
   headlamp.position.copy(camera.position);
@@ -1339,48 +1340,45 @@ const euro = (x) => '\u20AC ' + Math.round(x);
 // BUGFIX v8.1: Der Mobil-Offset war einmalig beim Laden eingebrannt —
 // Gerät drehen (Hoch-/Querformat) ließ die Kamera falsch rahmen, bis man
 // neu lud. Jetzt wird der Offset bei jedem Wechsel nachgezogen.
-const CHAPTER_CAM = {
-  hero:      { p: [0, 7, 24],      t: [0, -2.5, 0] },
-  profil:    { p: [0, 13, 17],     t: [0, -1, 0] },
-  mass:      { p: [0.5, 26, 2],    t: [0, -4.3, 0] },
-  schiene:   { p: [24, 1.5, 4],    t: [0, 0, 0] },
-  guss:      { p: [7.6, 0.9, 6.9], t: [4.95, 0, 0.65] },
-  uebergabe: { p: [-4, 10, 22],    t: [0, -3, 0] },
+// ── Kapitel-Kameras: getrennte Sätze für Desktop und Mobil (Hochformat).
+// Jeder Wert einzeln im Framing-Labor (headless-gl) gegen die Referenz-
+// bilder geprüft: Profil = frontale Schnittfläche in gleicher Ausrichtung,
+// Mass = Blick in die Bohrung (Ring rechts), Guss = stehende Silhouette
+// (Ring rechts), Übergabe so weit zurück, dass der taumelnde Münzfall
+// nie über den oberen Rand hinausläuft. Mobil zentriert, weiter zurück,
+// damit der volle Ringdurchmesser in die schmale Breite passt.
+const CAM_D = {
+  hero:      { p: [0, 7, 24],       t: [0, -2.5, 0] },
+  profil:    { p: [0, 11.5, 11.5],  t: [0, 3.2, 0.3] },
+  mass:      { p: [-7, 12.5, 14.5], t: [-4, -2.6, 0] },
+  schiene:   { p: [24, 1.5, 4],     t: [0, 0, 0] },
+  guss:      { p: [-3.6, 0, 20],    t: [-3.8, 0, 0] },
+  uebergabe: { p: [-4.5, 10.5, 26], t: [0, -2.6, 0] },
 };
-for (const c of Object.values(CHAPTER_CAM)) c.baseT1 = c.t[1];
+const CAM_M = {
+  hero:      { p: [0, 11, 42],    t: [0, -1.5, 0] },
+  profil:    { p: [0, 13, 17],    t: [0, 3.2, 0.3] },
+  mass:      { p: [0, 26, 34],    t: [0, -2, 0] },
+  schiene:   { p: [40, 2.5, 6.7], t: [0, 0, 0] },
+  guss:      { p: [0, 0, 46],     t: [0, 0, 0] },
+  uebergabe: { p: [0, 10, 40],    t: [0, -2, 0] },
+};
 const mobileMQ = window.matchMedia('(max-width: 860px)');
-function applyViewportOffsets() {
-  const off = mobileMQ.matches ? -7 : 0;
-  for (const c of Object.values(CHAPTER_CAM)) c.t[1] = c.baseT1 + off;
-}
-applyViewportOffsets();
-mobileMQ.addEventListener('change', applyViewportOffsets);
+const camSet = () => (mobileMQ.matches ? CAM_M : CAM_D);
 // Posen je Stufe: Orientierung, Ruhehöhe, Halb-/Vollring
 const POSES = {
   hero:      { rx: -0.32 * Math.PI, rz: 0, y: -2.6, half: false },
   profil:    { rx: -Math.PI / 2, rz: Math.PI / 2, y: 0, half: true },
-  mass:      { rx: 0, rz: 0, y: -4.27, half: false },
+  mass:      { rx: 0, rz: 0, y: -3.0, half: false },
   schiene:   { rx: -Math.PI / 2, rz: 0, y: 0, half: false },
   guss:      { rx: -Math.PI / 2, rz: 0, y: 0, half: false },
   uebergabe: { rx: 0, rz: 0, y: -4.27, half: false },
 };
-const poseQuat = new THREE.Quaternion().setFromEuler(new THREE.Euler(-0.32 * Math.PI, 0, 0));
+const POSE_Q = {};
+for (const [id, p] of Object.entries(POSES))
+  POSE_Q[id] = new THREE.Quaternion().setFromEuler(new THREE.Euler(p.rx, 0, p.rz));
+const poseQuat = POSE_Q.hero.clone();
 let poseY = -2.6, poseHalf = false, dropAnim = null;
-function applyPoseGoal(id) {
-  const p = POSES[id] || POSES.hero;
-  poseQuat.setFromEuler(new THREE.Euler(p.rx, 0, p.rz));
-  poseY = p.y;
-  if (p.half !== poseHalf) {
-    poseHalf = p.half;
-    // Kein harter Schnitt mehr: der Ring öffnet/schließt sich als Bogen —
-    // der Sweep startet immer beim aktuellen Öffnungswinkel, egal wie
-    // schnell jemand zwischen den Kapiteln springt.
-    if (reducedMotion) { arcAnim = null; rebuildRing(); }
-    else arcAnim = { from: arcCurrent, to: p.half ? Math.PI : FULL_ARC, t0: performance.now() };
-  }
-  if (id === 'uebergabe' && !reducedMotion) startDrop();
-  else dropAnim = null;
-}
 
 // ── Der Münzfall ──────────────────────────────────────────────────────
 // Physikalisch motiviert wie eine Münze, die man auf den Tisch dreht:
@@ -1437,57 +1435,110 @@ function tickDrop() {
     dropAnim = null;
   }
 }
-// Options-Blicke: die Wahl selbst lenkt die Kamera — Oberfläche fährt
-// auf den Makro-Detailbereich der Schiene, Profil und Schiene nah an
-// den Querschnitt. Beim Weiterscrollen übernimmt wieder das Kapitel.
-const OPTION_CAM = {
-  profil: CHAPTER_CAM.profil,
-  dim:    CHAPTER_CAM.schiene,
-  size:   CHAPTER_CAM.mass,
-  mat:    CHAPTER_CAM.guss,
-};
 let activeChapter = 'hero';
-let camGoal = CHAPTER_CAM.hero;
-let userHold = false; // greift der Mensch ein, ruht die Choreografie
+let userHold = false;   // greift der Mensch ein (Drehen/Zoomen), ruht die Choreografie
+let dropStarted = false; // Latch: Münzfall genau einmal je Übergabe-Besuch
 controls.addEventListener('start', () => { userHold = true; });
+// Sobald wieder gescrollt wird, übernimmt die Choreografie zurück.
+window.addEventListener('scroll', () => { userHold = false; }, { passive: true });
+
+// ── Fortlaufender Scroll-Antrieb ──────────────────────────────────────
+// Kamera, Ring-Lage und Öffnungswinkel hängen jeden Frame direkt an der
+// Scroll-Position und wandern stufenlos zwischen den Kapiteln — nicht
+// mehr in festen Schritten getriggert. Ankerlinie = Bildschirmmitte;
+// zwischen den Kapitel-Mitten wird interpoliert (smoothstep).
+const ORDER = ['hero', 'profil', 'mass', 'schiene', 'guss', 'uebergabe'];
+let chapterEls = [];
+function measureChapters() { chapterEls = ORDER.map(id => document.getElementById(id)); }
+measureChapters();
+window.addEventListener('resize', measureChapters);
+const smooth = f => f * f * (3 - 2 * f);
+const lerp = (a, b, t) => a + (b - a) * t;
+const _driveP = [0, 7, 24], _driveT = [0, -2.5, 0];
+let driveArc = FULL_ARC, arcSettled = null, suppressPulse = false;
+const _qa = new THREE.Quaternion(), _qb = new THREE.Quaternion();
+
+function scrollDrive() {
+  const vh = window.innerHeight || 1;
+  const anchor = window.scrollY + vh * 0.5;
+  const c = chapterEls.map(el => el ? el.offsetTop + el.offsetHeight * 0.5 : 0);
+  const n = c.length;
+  let seg = 0, frac = 0;
+  if (anchor <= c[0]) { seg = 0; frac = 0; }
+  else if (anchor >= c[n - 1]) { seg = n - 2; frac = 1; }
+  else for (let i = 0; i < n - 1; i++) {
+    if (anchor >= c[i] && anchor <= c[i + 1]) { seg = i; frac = (anchor - c[i]) / ((c[i + 1] - c[i]) || 1); break; }
+  }
+  const e = smooth(frac);
+  const a = ORDER[seg], b = ORDER[Math.min(seg + 1, n - 1)];
+  const CAM = camSet();
+  for (let k = 0; k < 3; k++) {
+    _driveP[k] = lerp(CAM[a].p[k], CAM[b].p[k], e);
+    _driveT[k] = lerp(CAM[a].t[k], CAM[b].t[k], e);
+  }
+  _qa.copy(POSE_Q[a]); _qb.copy(POSE_Q[b]); poseQuat.slerpQuaternions(_qa, _qb, e);
+  poseY = lerp(POSES[a].y, POSES[b].y, e);
+  driveArc = lerp(POSES[a].half ? Math.PI : FULL_ARC, POSES[b].half ? Math.PI : FULL_ARC, e);
+
+  const near = e < 0.5 ? a : b;
+  if (near !== activeChapter) {
+    activeChapter = near;
+    document.querySelectorAll('.nav ul a').forEach(x =>
+      x.setAttribute('aria-current', String(x.dataset.nav === near)));
+  }
+
+  // Finale: den 5-Sekunden-Münzfall genau einmal auslösen, sobald die
+  // Übergabe dominiert — und beim Zurückscrollen wieder scharf schalten.
+  const inUber = (b === 'uebergabe' && e > 0.55) || a === 'uebergabe';
+  if (inUber && !dropStarted && !reducedMotion) { startDrop(); dropStarted = true; }
+  else if (!inUber && dropStarted) { dropStarted = false; dropAnim = null; }
+
+  // Bogen fortlaufend scrubben; an den Rastpunkten (Halbring π / Vollring
+  // 2π) einmal voll aufbauen — dort gehören Maßlinien bzw. Gusskante dazu.
+  if (!dropAnim && ringGroup) {
+    const settled = Math.abs(driveArc - Math.PI) < 0.03 ? Math.PI
+                  : (Math.abs(driveArc - FULL_ARC) < 0.03 ? FULL_ARC : null);
+    if (settled !== null) {
+      poseHalf = settled === Math.PI;
+      if (arcSettled !== settled) { suppressPulse = true; rebuildRing(); suppressPulse = false; arcSettled = settled; }
+    } else {
+      poseHalf = driveArc < Math.PI + 0.5;
+      arcSettled = null;
+      if (Math.abs(driveArc - arcCurrent) > 0.012) updateArcGeometry(driveArc);
+    }
+  }
+}
 
 function camTick(dt = 16.7) {
-  // Dämpfung bildratenunabhängig: derselbe Weg pro Millisekunde, ob das
-  // Display 60, 90 oder 120 Hz fährt (vorher: 120 Hz = doppeltes Tempo).
+  // Dämpfung bildratenunabhängig: gleicher Weg pro Millisekunde bei 60/90/120 Hz.
   const damp = (base) => reducedMotion ? 1 : 1 - Math.pow(1 - base, dt / 16.7);
   if (ringGroup && !dropAnim) {
-    const k = damp(0.06);
+    const k = damp(0.14);
     ringGroup.quaternion.slerp(poseQuat, k);
     ringGroup.position.y += (poseY - ringGroup.position.y) * k;
   }
-  if (userHold || !camGoal) return;
-  const k = damp(0.045);
-  camera.position.x += (camGoal.p[0] - camera.position.x) * k;
-  camera.position.y += (camGoal.p[1] - camera.position.y) * k;
-  camera.position.z += (camGoal.p[2] - camera.position.z) * k;
-  controls.target.x += (camGoal.t[0] - controls.target.x) * k;
-  controls.target.y += (camGoal.t[1] - controls.target.y) * k;
-  controls.target.z += (camGoal.t[2] - controls.target.z) * k;
+  if (userHold) return;
+  const k = damp(0.16);
+  camera.position.x += (_driveP[0] - camera.position.x) * k;
+  camera.position.y += (_driveP[1] - camera.position.y) * k;
+  camera.position.z += (_driveP[2] - camera.position.z) * k;
+  controls.target.x += (_driveT[0] - controls.target.x) * k;
+  controls.target.y += (_driveT[1] - controls.target.y) * k;
+  controls.target.z += (_driveT[2] - controls.target.z) * k;
 }
 
-// Scrollspy: aktives Kapitel → Kamera, Navigation, Erst-Einblendung
+// Erst-Einblendung der Kapitel (nur die .in-Klasse, unabhängig von der Kamera).
 {
-  const chapters = document.querySelectorAll('.kapitel');
   const io = new IntersectionObserver((entries) => {
-    for (const e of entries) {
-      if (!e.isIntersecting) continue;
-      e.target.classList.add('in');
-      const id = e.target.id;
-      if (id !== activeChapter) {
-        activeChapter = id; userHold = false;
-        camGoal = CHAPTER_CAM[id] || CHAPTER_CAM.hero;
-        applyPoseGoal(id);
-        document.querySelectorAll('.nav ul a').forEach(a =>
-          a.setAttribute('aria-current', String(a.dataset.nav === id)));
-      }
-    }
-  }, { threshold: 0.5 });
-  chapters.forEach(c => io.observe(c));
+    for (const en of entries) if (en.isIntersecting) en.target.classList.add('in');
+  }, { threshold: 0.35 });
+  document.querySelectorAll('.kapitel').forEach(ch => io.observe(ch));
+}
+
+// Kamera direkt auf das Hero-Bild setzen, damit kein Einflug-Glide startet.
+{
+  const h = camSet().hero;
+  camera.position.set(...h.p); controls.target.set(...h.t); controls.update();
 }
 
 // ── Bühnen-Werkzeuge ──────────────────────────────────────────────────
@@ -1499,9 +1550,10 @@ toolRotate.addEventListener('click', () => {
   toolRotate.setAttribute('aria-pressed', String(controls.autoRotate));
 });
 $('toolReset').addEventListener('click', () => {
-  userHold = false; camGoal = CHAPTER_CAM[activeChapter] || CHAPTER_CAM.hero;
+  // Handkamera loslassen — die Scroll-Choreografie holt die Ansicht zurück.
+  userHold = false;
   if (reducedMotion) {
-    camera.position.set(...camGoal.p); controls.target.set(...camGoal.t); controls.update();
+    camera.position.set(..._driveP); controls.target.set(..._driveT); controls.update();
   }
 });
 
@@ -1646,7 +1698,6 @@ function onChange(what) {
     const need = !!MATERIALS[state.material].sandNormal;
     if (ringGroup && ringGroup.userData.cast !== need) scheduleRebuild(); else applyMaterial();
   } else scheduleRebuild();
-  if (OPTION_CAM[what]) { userHold = false; camGoal = OPTION_CAM[what]; }
   saveState();
 }
 

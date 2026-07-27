@@ -1,6 +1,6 @@
 # Atelier Heinek — Übergabe
 
-**Stand:** 21. Juli 2026 · Werkbank v8 · Identität „Galerie & Sandkammer" (Landing dunkel) / „Die helle Galerie" (Konfigurator hell)
+**Stand:** 27. Juli 2026 · Werkbank v8.2 · Identität „Galerie & Sandkammer" (Landing dunkel) / „Die helle Galerie" (Konfigurator hell)
 
 Diese Datei ist der Einstiegspunkt für jeden, der an `atelierheinek.com` weiterarbeitet — Andre selbst nach einer Pause, ein anderer Claude, oder eine Entwicklerin. Sie beschreibt, was existiert, warum es so aussieht, wo die offenen Enden liegen und wie man sicher testet, ohne die Live-Seite zu berühren.
 
@@ -109,6 +109,29 @@ Kein Assistent, kein mehrstufiger Formular-Flow. Die App ist **ein langes Scroll
 - **Der Münzfall (Übergabe):** 5 Sekunden, physikalisch motiviert wie eine gedrehte Münze. `startDrop()` misst einmalig die Bodenhöhe der flachen Ruhelage (Bounding-Box), `tickDrop()` blendet in 0,6 s aus der aktuellen Lage ins Taumeln, dann Euler-Scheibe: Neigung θ = 90°·(1−t^2,4), Präzession ω = 3,0 + 4,2/√θ (wird schneller, je flacher der Ring), leises Abrollen um die eigene Achse. Die Höhe wird **nicht animiert, sondern pro Frame gemessen** — der Ring bleibt exakt in Bodenkontakt. Headless verifiziert: endet flach, exakt auf −4,27, keine NaN.
 - **Werkstattzettel als PDF** (`btnPDF`, sichtbar für alle, dezent unter dem CTA): jsPDF lazy von `/vendor/jspdf.umd.min.js`, hochauflösender Live-Screenshot des Rings (`captureRingImage`, render-dann-sofort-auslesen), A4-Datenblatt in der Galerie-Palette (Gold nur beim Richtpreis). Fallback: `window.print()` — die Seite hat Print-Styles.
 - **Werkstatt-Export** (`btnSTEP`/`btnSTL`/`btnOBJ`): nur sichtbar mit **`?werkstatt`** in der URL. STL binär, OBJ, und der analytische STEP-B-Rep aus v2 (unverändert portiert, in Node gegen alle Profile × EU 42/60/72 getestet — geschlossener Solid, keine NaN). Exportiert wird immer der **volle** Ring, unabhängig von Halbring/Sweep auf der Bühne. `flushRebuild()` bringt die Bühne vor dem PDF-Capture in den finalen Stand.
+
+### Neu in v8.1 (Bugjagd)
+- **Der Kernbug: die Bühne war tot.** `main` lag mit vollen Viewport-Kapiteln über dem Canvas und schluckte jede Zeigereingabe — Drehen und Zoomen waren schlicht unmöglich, auf Desktop wie mobil. Fix: `main { pointer-events: none }`, nur `.k-kopf/.k-seite/.k-steuer` fangen Eingaben. Die Bühne ist überall dort bedienbar, wo kein Inhalt liegt (Desktop: die Mittelspalte; mobil: die oberen 46svh über dem Ring).
+- **Eingabe-Regie** (Kommentarblock „Eingabe-Regie" im Code): Rad ohne Modifier scrollt das Dokument (Capture-Interceptor am `window` stoppt die Propagation VOR OrbitControls, sonst frisst dessen `preventDefault` das Scrollen). Strg/Cmd+Rad zoomt — Trackpad-Pinch sendet `ctrlKey`, funktioniert also von selbst. Mobil: `touch-action: pan-y` (OrbitControls setzt intern `none`, wird per Inline-Style zurückgeholt), 1 Finger vertikal scrollt, 1 Finger quer dreht, 2 Finger zoomen (`touches.TWO = DOLLY_PAN`). `minDistance` von 4 auf 3 für den Makro-Blick.
+- **Bildratenunabhängige Dämpfung:** Kamera-/Posen-Lerp und der Pulse liefen mit festem Faktor pro Frame — auf 120-Hz-Displays doppelt so schnell wie auf 60 Hz. Jetzt dt-basiert (`damp(base) = 1 − (1−base)^(dt/16.7)`).
+- **Sweep-Fastpath:** `updateArcGeometry()` tauscht während des Bogens nur noch Geometrien auf den bestehenden Meshes (inkl. Spiegel-Sync per Referenz) statt pro Frame Gruppe, Meshes und Material-Klone neu zu bauen.
+- **GPU-Leck geschlossen:** Die Maßlinien (Canvas-Texturen, Sprite-/Line-Materialien) wurden beim Neuguss nie entsorgt — `disposeDeep()` räumt jetzt auf. In Node 200 Neuguss-Zyklen ohne Fehler.
+- **Floor-Neumessung:** Ändert jemand mitten im Münzfall die Konfiguration, wird die Bodenhöhe der Ruhelage neu gemessen (`measureFlatFloor()`), sonst landete der Ring daneben.
+- **Orientierungswechsel mobil:** Der −7-Kamera-Offset war beim Laden eingebrannt; jetzt zieht `applyViewportOffsets()` ihn bei jedem Hoch-/Querformat-Wechsel nach.
+- Headless verifiziert (Node + vendored Three.js): Sweep hin/zurück mit Neuguss mittendrin, Spiegel-Referenzen synchron, Halbring-Fall mit gleichzeitigem Schließen endet flach exakt auf der Ruhelage.
+
+### Neu in v8.2 (Framing + fortlaufende Scroll-Kopplung)
+- **Die Kamera hängt jetzt stufenlos am Scrollen.** Der alte `IntersectionObserver` sprang bei 50 % Sichtbarkeit auf feste Kamera-Ziele — die Bewegung wurde also in festen Stufen getriggert. Ersetzt durch `scrollDrive()` (jeden Frame): Ankerlinie = Scroll-Position + halbe Fensterhöhe, dazwischen wird über die Kapitel-Mitten interpoliert (smoothstep). Kameraposition, Blickziel, Ring-Quaternion (`slerp`), Ruhehöhe und **Öffnungswinkel** wandern damit fortlaufend mit dem Scrollen. Der Bogen (Halbring↔Vollring) wird live gescrubbt; nur an den Rastpunkten π / 2π ein einziger voller `rebuildRing()` (dort gehören Maßlinien bzw. Gusskante dazu), dazwischen der Fastpath — Pulse dabei unterdrückt (`suppressPulse`).
+- **Münzfall bleibt das Finale:** wird über einen Latch (`dropStarted`) genau einmal ausgelöst, sobald die Übergabe dominiert, und beim Zurückscrollen wieder scharf geschaltet.
+- **Handkamera & Scroll koexistieren:** Drehen/Zoomen setzt `userHold` (Choreografie pausiert); das nächste Scroll-Event gibt sie frei. `IntersectionObserver` bleibt nur noch für die `.in`-Ersteinblendung.
+- **Framing pro Kapitel — jeder Wert im Labor (headless-gl, Bildschirm-Bounding-Box) gegen die vier Referenzbilder geprüft, getrennte Sätze `CAM_D` (Desktop) und `CAM_M` (Mobil-Hochformat, zentriert und weiter zurück):**
+  - **Profil** — frontal auf die obere Schnittfläche in gleicher Ausrichtung (das rote Kästchen), Band läuft nach unten aus.
+  - **Mass** — schräger Blick in die Bohrung, Ring rechts (wie Referenzbild). Pose bleibt flach, die schräge Kamera erzeugt den Blick in die Bohrung; `POSES.mass.y` von −4,27 auf −3,0.
+  - **Guss** — stehende Silhouette, Ring rechts (wie Referenzbild).
+  - **Übergabe** — Kamera so weit zurück, dass der **taumelnde Münzfall** (hochkant = höchster Punkt) nicht mehr oben anschneidet. Das war die Ursache des abgeschnittenen Rings — es passiert während des Falls, nicht in der Ruhelage.
+- Weil `baseScale = 5.4/(innerR+height)` den Außenradius immer auf ~5,4 Weltmaß normalisiert, ist das Framing **EU-größenunabhängig** — einmal geprüft gilt für 42…72.
+- Verifiziert: Modul-Syntax, `node build.mjs`, Routen 200, und ein JSDOM-+-headless-gl-Boot mit vollem Scroll-Durchlauf (0→5→0→5 in 30-px-Schritten), Drop-Latch-Reset und Optionswechsel am Profil — keine Laufzeitfehler.
+- **Mobil bitte am Gerät gegenprüfen:** die `CAM_M`-Werte sind headless für Hochformat (~430×780) gemessen; reale Viewports variieren.
 
 ---
 

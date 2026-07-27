@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Atelier Heinek — Ringe aus dem Sandguss · Vorarlberg</title>
+<meta name="description" content="Atelier Heinek, Dornbirn. Ringe aus 925 Silber, von Hand im Delft-Sand gegossen. Jede Form wird genau einmal gegossen. Aus dem Sand. In die Hand." />
+<link rel="canonical" href="https://atelierheinek.com/" />
+<meta name="theme-color" content="#131211" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Atelier Heinek" />
+<meta property="og:title" content="Atelier Heinek — Ringe aus dem Sandguss" />
+<meta property="og:description" content="925 Silber, handgegossen im Delft-Sand in Vorarlberg. Jede Form wird genau einmal gegossen. Aus dem Sand. In die Hand." />
+<meta property="og:url" content="https://atelierheinek.com/" />
+<meta property="og:image" content="https://atelierheinek.com/og-image.jpg" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content="Handgegossener Silberring auf dunklem Graphitgrund" />
+<meta property="og:locale" content="de_AT" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Atelier Heinek — Ringe aus dem Sandguss" />
+<meta name="twitter:description" content="925 Silber, handgegossen im Delft-Sand in Vorarlberg. Jede Form wird genau einmal gegossen." />
+<meta name="twitter:image" content="https://atelierheinek.com/og-image.jpg" />
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://atelierheinek.com/#org","name":"Atelier Heinek","url":"https://atelierheinek.com/","description":"Handgegossene Ringe aus 925 Silber, im Delft-Sand gegossen in Vorarlberg.","founder":{"@type":"Person","name":"Andre Heinek"},"image":"https://atelierheinek.com/og-image.jpg","address":{"@type":"PostalAddress","addressLocality":"Dornbirn","postalCode":"6850","addressRegion":"Vorarlberg","addressCountry":"AT"}},{"@type":"WebSite","@id":"https://atelierheinek.com/#website","url":"https://atelierheinek.com/","name":"Atelier Heinek","inLanguage":"de-AT","publisher":{"@id":"https://atelierheinek.com/#org"}}]}</script>
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20fill='%23131211'/%3E%3Ctext%20x='32'%20y='43'%20font-family='Georgia,serif'%20font-style='italic'%20font-size='30'%20fill='%23ece2cc'%20text-anchor='middle'%3EAH%3C/text%3E%3C/svg%3E" />
+<meta name="color-scheme" content="dark" />
+
+<link href="/vendor/fonts/fonts.css" rel="stylesheet" />
+
+<link rel="prefetch" href="/werkbank/" />
+<link rel="prefetch" href="/vendor/three/three.module.js" />
+<link rel="prefetch" href="/vendor/three/examples/jsm/controls/OrbitControls.js" />
+<style>@keyframes pour{0%{transform:translateY(0);opacity:0}8%{opacity:1}55%{transform:translateY(calc(100% + clamp(64px,12vh,110px)));opacity:1}62%{opacity:0}to{transform:translateY(calc(100% + clamp(64px,12vh,110px)));opacity:0}}@keyframes arrive{0%,14%,to{opacity:0}3%{opacity:1}}@keyframes rise{to{opacity:1;transform:translateY(0)}}@keyframes fade{to{opacity:1}}:root{--bg:#131211;--ink:#edebe4;--ink-soft:#d8d4c9;--ink-muted:#a8a396;--ink-faint:#7d786c;--line:#3c3933;--sand:#c8b896;--sand-deep:#a89272;--accent:#c98f3e;--ember:#e0772b;--transition:0.2s cubic-bezier(0.23, 1, 0.32, 1)}*,::after,::before{box-sizing:border-box;margin:0;padding:0}body,html{height:100%}body{background:var(--bg);color:var(--ink);font-family:"Source Serif 4",serif;display:flex;flex-direction:column;min-height:100dvh;position:relative}::selection{background:rgba(201,143,62,.3);color:var(--ink)}body::before{content:"";position:fixed;inset:0;pointer-events:none;background-image:radial-gradient(circle at 30% 40%,rgba(200,184,150,.06)0,transparent 50%),radial-gradient(circle at 70% 60%,rgba(168,146,114,.04)0,transparent 60%),radial-gradient(circle at 1px 1px,rgba(200,184,150,.12) 1px,transparent 0);background-size:auto,auto,4px 4px;opacity:.7}main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:48px 24px 24px;position:relative}.mark{font-family:"Singlong",cursive;font-weight:400;font-size:clamp(72px,12vw,104px);line-height:1;color:#e8dec8;letter-spacing:-.02em;opacity:0;transform:translateY(8px);animation:rise 1.2s cubic-bezier(.4,0,.2,1) .2s forwards}.claim,.tagline,h1{font-family:"Playfair Display",serif;opacity:0}h1{font-weight:500;font-size:clamp(12px,2.4vw,14px);letter-spacing:.45em;text-transform:uppercase;color:#b8a888;margin:26px 0 0;padding-left:.45em;animation:fade 1s ease .7s forwards}.claim,.tagline{font-style:italic}.tagline{font-size:clamp(19px,3.6vw,23px);color:#d4c5a3;letter-spacing:.03em;margin-top:30px;animation:fade 1.2s ease 1.2s forwards}.tagline .dot{display:inline-block;width:4px;height:4px;background:#8a7e60;border-radius:50%;margin:0 14px;transform:translateY(-4px)}.claim{font-size:14px;color:var(--ink-faint);letter-spacing:.04em;margin-top:14px;max-width:46ch;text-wrap:balance;animation:fade 1.4s ease 1.7s forwards}.channel,.enter{position:relative;opacity:0}.channel{width:1px;height:clamp(64px,12vh,110px);margin:40px 0 34px;background:var(--line);animation:fade 1.2s ease 2.2s forwards}.channel::after{content:"";position:absolute;left:-1px;top:-14px;width:3px;height:14px;border-radius:2px;background:linear-gradient(180deg,transparent,var(--ember));filter:drop-shadow(0 0 6px rgba(224,119,43,.55));animation:pour 4.5s cubic-bezier(.55,.06,.68,.19) 2.6s infinite}.enter{display:inline-block;text-decoration:none;font-family:"JetBrains Mono",monospace;font-size:10px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--sand);border:1px solid rgba(224,119,43,.45);padding:15px 30px;transition:all var(--transition);animation:fade 1s ease 2.6s forwards}.enter::after{content:"";position:absolute;inset:-1px;pointer-events:none;border:1px solid var(--ember);box-shadow:0 0 24px rgba(224,119,43,.25),inset 0 0 12px rgba(224,119,43,.08);opacity:0;animation:arrive 4.5s ease 5.05s infinite}.enter:focus-visible,.enter:hover{color:var(--ink);border-color:var(--ember);box-shadow:0 0 24px rgba(224,119,43,.18)}.enter:focus-visible{outline:2px solid var(--ember);outline-offset:3px}.enter span{color:var(--ember);margin-right:12px}.facts{margin-top:44px;font-size:10px;letter-spacing:.12em;line-height:2.1;animation:fade 1.2s ease 3s forwards}.facts b{font-weight:500;color:var(--sand)}.facts .sep{color:var(--line);margin:0 6px}.facts,footer,footer a{color:var(--ink-faint)}.facts,footer{font-family:"JetBrains Mono",monospace;text-transform:uppercase;opacity:0}footer{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:12px 22px;padding:22px 24px calc(22px + env(safe-area-inset-bottom));font-size:9px;letter-spacing:.1em;animation:fade 1.2s ease 3.2s forwards}footer a{text-decoration:none;transition:color var(--transition)}footer a:focus-visible,footer a:hover{color:var(--sand)}footer a:focus-visible{outline:2px solid var(--accent);outline-offset:3px}footer .sep{width:3px;height:3px;border-radius:50%;background:var(--line)}@media (prefers-reduced-motion:reduce){.channel,.claim,.enter,.facts,.mark,.tagline,footer,h1{animation:none;opacity:1;transform:none}.channel::after,.enter::after{animation:none;opacity:0}}</style>
+</head>
+<body>
+
+<main>
+  <div class="mark" aria-hidden="true">AH</div>
+  <h1>Atelier Heinek</h1>
+  <p class="tagline">Aus dem Sand<span class="dot"></span>In die Hand</p>
+  <p class="claim">Ringe aus 925 Silber, von Hand im Delft-Sand gegossen. Die Form gibt es nur einmal. Dein Ring auch.</p>
+
+  <div class="channel" aria-hidden="true"></div>
+
+  <a class="enter" href="/werkbank/"><span>&darr;</span>Zur Werkbank — entwirf deinen Ring</a>
+
+  <p class="facts">
+    <b>925 Silber</b><span class="sep">·</span>Delft-Sandguss<span class="sep">·</span>Dornbirn, Vorarlberg<br />
+    
+    Werkstatt im Aufbau<span class="sep">·</span>Unverbindliche Anfragen willkommen
+  </p>
+</main>
+
+<footer>
+  <a href="/faq.html">Fragen</a>
+  <span class="sep" aria-hidden="true"></span>
+  <a href="/agb.html">AGB</a>
+  <span class="sep" aria-hidden="true"></span>
+  <a href="/impressum.html">Impressum</a>
+  <span class="sep" aria-hidden="true"></span>
+  <a href="/datenschutz.html">Datenschutz</a>
+  <span class="sep" aria-hidden="true"></span>
+  <a href="mailto:info@atelierheinek.com">info@atelierheinek.com</a>
+</footer>
+
+</body>
+</html>
