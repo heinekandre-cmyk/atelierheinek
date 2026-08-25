@@ -94,6 +94,19 @@ writeFileSync(join(DIST, '_headers'), `/*
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=()
+
+# Vendor-Dateien ändern sich praktisch nie → lange cachen.
+/vendor/*
+  Cache-Control: public, max-age=604800
+
+# Schriften sind versioniert-stabil → ein Jahr, immutable.
+/vendor/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# hand.obj ist Klartext (1,2 MB). Als text/plain ausgeliefert komprimiert
+# Cloudflare es automatisch (Brotli/Gzip) → ~70-80 % kleiner beim Laden.
+/vendor/models/*.obj
+  Content-Type: text/plain; charset=utf-8
 `);
 
 console.log('Build fertig.\n' + report.join('\n'));
